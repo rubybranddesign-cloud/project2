@@ -320,7 +320,7 @@
     <div id="toast-container"></div>
     
     <script>
-      // 💥 已鎖定 x-goog-api-key 在 Headers 的正確呼叫方式與 Gemini 模型
+      // 💥 已鎖定 GAS 網址與前端雙棲環境防禦機制
       const GAS_WEB_URL = "https://script.google.com/macros/s/AKfycby2Q7TodG2_uU1KV_kL8SZA4mK-GybbkZY6-jxBr2_es2JzyF6lXeTwFEFc0uflDcOx/exec"; 
 
       const OfflineQueueManager = {
@@ -393,11 +393,13 @@
             });
           } else {
             try {
+              // 💥 優化 CORS 呼叫，確保 text/plain 與 redirect 處理，避免 preflight 阻擋
               const url = new URL(GAS_WEB_URL);
               const response = await fetch(url.toString(), {
                 method: 'POST',
-                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                body: JSON.stringify({ action: action, payload: payload })
+                headers: { 'Content-Type': 'text/plain' },
+                body: JSON.stringify({ action: action, payload: payload }),
+                redirect: 'follow'
               });
               const res = await response.json();
               if (res.status === 'success') return res.data;
@@ -418,7 +420,7 @@
         toast.innerText = message;
         container.appendChild(toast);
         requestAnimationFrame(() => { toast.style.opacity = '1'; toast.style.transform = 'translateY(0)'; });
-        setTimeout(() => { toast.style.opacity = '0'; toast.style.transform = 'translateY(-10px)'; setTimeout(() => toast.remove(), 300); }, 3000);
+        setTimeout(() => { toast.style.opacity = '0'; toast.style.transform = 'translateY(-10px)'; setTimeout(() => toast.remove(), 300); }, 5000);
       }
 
       function switchView(viewId, btnElement) {
@@ -1694,7 +1696,12 @@
 
         } catch(e) {
           const errorMsg = typeof e === 'string' ? e : (e.message || JSON.stringify(e));
-          showToast("讀取失敗：" + errorMsg, "error");
+          // 💥 攔截 ERR_FAILED 提供精準解法引導
+          if (errorMsg.includes('Failed to fetch') || errorMsg.includes('ERR_FAILED')) {
+              showToast("網路請求被阻擋！請確認 GAS 已經重新發佈為「網頁應用程式」，並設定為「所有人」皆可存取。", "error");
+          } else {
+              showToast("讀取失敗：" + errorMsg, "error");
+          }
         }
       };
     </script>
