@@ -1,0 +1,1701 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+  <head>
+    <base target="_top">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>露比專案管理系統</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+TC:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+      :root {
+        --bg-main: #FFFFFF;
+        --bg-card: #FAFAFA;
+        --text-main: #111111;
+        --text-secondary: #666666;
+        --text-muted: #999999;
+        --border-light: #E5E5E5;
+        --border-dark: #111111;
+        --spacing-sm: 8px;
+        --spacing-md: 16px;
+        --spacing-lg: 24px;
+        --color-accent: #ea580c; 
+      }
+
+      *, *::before, *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        font-family: 'Inter', 'Noto Sans TC', sans-serif;
+        background-color: var(--bg-main);
+        color: var(--text-main);
+        font-size: 14px;
+        line-height: 1.6;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+
+      h1 { font-size: 22px; line-height: 1.4; font-weight: 600; letter-spacing: -0.01em; color: var(--text-main); margin-bottom: var(--spacing-md); }
+      h2 { font-size: 16px; line-height: 1.5; font-weight: 600; color: var(--text-main); margin-bottom: var(--spacing-sm); }
+      h3 { font-size: 14px; line-height: 1.5; font-weight: 600; color: var(--text-main); margin-bottom: var(--spacing-sm); }
+
+      input, textarea, select, button { font-family: inherit; font-size: 14px; line-height: 1.6; color: var(--text-main); }
+      .caption { font-size: 12px; line-height: 1.5; color: var(--text-secondary); }
+
+      .btn-primary {
+        background: #111111; color: #FFFFFF; border: none; border-radius: 8px; height: 44px; padding: 0 16px;
+        font-weight: 500; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 8px; transition: opacity 0.2s ease;
+      }
+      .btn-primary:hover { opacity: 0.8; }
+      .btn-primary:disabled { background: var(--text-muted); cursor: not-allowed; }
+
+      .btn-secondary {
+        background: #FFFFFF; color: #111111; border: 1px solid #111111; border-radius: 8px; height: 44px; padding: 0 16px;
+        font-weight: 500; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 8px; transition: background-color 0.2s ease;
+      }
+      .btn-secondary:hover { background-color: #FAFAFA; }
+
+      .btn-icon {
+        background: #FFFFFF; border: 1px solid var(--border-light); border-radius: 8px; 
+        width: 36px; height: 36px; display: inline-flex; align-items: center; justify-content: center;
+        cursor: pointer; color: var(--text-main); transition: all 0.2s ease;
+      }
+      .btn-icon:hover { background: var(--bg-card); border-color: var(--text-main); }
+      .btn-icon.success { background: #FFFFFF; color: #111111; border-color: var(--border-light); }
+      .btn-icon.success:hover { background: #22c55e; color: #FFFFFF; border-color: #22c55e; }
+      .btn-icon.success.active { background: #22c55e; color: #FFFFFF; border-color: #22c55e; }
+      .btn-icon.danger { background: #FFFFFF; color: var(--text-muted); border-color: transparent; }
+      .btn-icon.danger:hover { background: #fee2e2; color: #ef4444; }
+      .btn-icon.ghost { background: transparent; border-color: transparent; color: var(--text-muted); width: 28px; height: 28px; }
+      .btn-icon.ghost:hover { background: var(--bg-card); color: var(--text-main); }
+
+      .input-field {
+        background: #FFFFFF; border: 1px solid #E5E5E5; height: 44px; border-radius: 8px; padding: 0 12px;
+        outline: none; width: 100%; transition: border-color 0.2s ease;
+      }
+      .input-field:focus { border: 1px solid #111111; }
+      textarea.input-field { height: auto; min-height: 80px; padding: 12px; resize: vertical; }
+
+      .card-mono { background: #FAFAFA; border: 1px solid #E5E5E5; border-radius: 8px; padding: 16px; transition: all 0.3s ease; }
+
+      .badge-mono {
+        background: #111111; color: #FFFFFF; border-radius: 4px; padding: 2px 8px; font-size: 12px;
+        display: inline-flex; align-items: center; white-space: nowrap;
+      }
+      .badge-mono.outline { background: transparent; color: #111111; border: 1px solid #111111; }
+
+      .divider { height: 1px; background-color: var(--border-light); margin: var(--spacing-md) 0; width: 100%; border: none; }
+
+      .popover {
+        position: absolute; background: var(--bg-main); border: 1px solid var(--border-dark); border-radius: 8px;
+        padding: var(--spacing-md); box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 1100;
+        display: none; width: 280px; max-height: 300px; overflow-y: auto;
+      }
+      .popover.active { display: block; }
+      .timeline-item { border-left: 2px solid var(--border-dark); padding-left: 12px; margin-bottom: 12px; position: relative; }
+      .timeline-item::before {
+        content: ''; position: absolute; left: -5px; top: 2px; width: 8px; height: 8px;
+        border-radius: 50%; background: var(--text-main);
+      }
+
+      .skeleton-box { background-color: var(--border-light); border-radius: 4px; animation: skeletonPulse 1.5s ease-in-out infinite; }
+      .skeleton-circle { background-color: var(--border-light); border-radius: 50%; animation: skeletonPulse 1.5s ease-in-out infinite; }
+      @keyframes skeletonPulse { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
+
+      .accordion-item { background: var(--bg-main); border: 1px solid var(--border-light); border-radius: 8px; margin-bottom: var(--spacing-sm); overflow: hidden; transition: border-color 0.2s ease; }
+      .accordion-header { padding: var(--spacing-md); cursor: pointer; display: flex; flex-direction: column; gap: 8px; background: var(--bg-main); transition: background-color 0.2s ease; }
+      .accordion-header:hover { background: var(--bg-card); }
+      .accordion-body { display: none; padding: var(--spacing-md); border-top: 1px solid var(--border-light); background: var(--bg-card); animation: fadeIn 0.3s ease; }
+      .progress-bar-bg { flex: 1; height: 6px; background-color: var(--border-light); border-radius: 3px; overflow: hidden; }
+      .progress-bar-fill { height: 100%; background-color: var(--text-main); transition: width 0.3s ease; }
+
+      #app-header, #app-content { 
+        width: 100%; max-width: 800px; margin: 0 auto; padding: var(--spacing-lg) var(--spacing-md); 
+      }
+      .navbar { display: flex; align-items: center; gap: var(--spacing-sm); margin-bottom: var(--spacing-md); padding-bottom: var(--spacing-sm); border-bottom: 1px solid var(--border-light); }
+      .navbar h2 { margin: 0; }
+
+      #top-nav {
+        display: flex; justify-content: flex-start; gap: 8px; flex-wrap: wrap; margin-bottom: 24px;
+      }
+      .nav-item {
+        display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 8px 16px; 
+        background: #FFFFFF; border: 1px solid var(--border-light); border-radius: 8px; 
+        color: var(--text-secondary); cursor: pointer; transition: all 0.2s ease; font-weight: 500; font-size: 13px;
+      }
+      .nav-item.active {
+        background: #111111; color: #FFFFFF; border-color: #111111;
+      }
+      .nav-item i { width: 16px; height: 16px; }
+
+      .view-section { display: none; animation: fadeIn 0.3s ease; }
+      .view-section.active { display: block; }
+      @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+      .draggable-task { transition: border-top 0.2s ease, opacity 0.2s ease; }
+      .draggable-task.dragging { opacity: 0.4; }
+      .inline-action-panel { animation: fadeIn 0.3s ease; }
+
+      .quote-iframe { width: 100%; height: 350px; border: 1px solid var(--border-light); border-radius: 8px; background: #fff; }
+    </style>
+  </head>
+  <body>
+    
+    <header id="app-header">
+      <div class="navbar">
+        <i data-lucide="folder-kanban" style="width: 24px; height: 24px;"></i>
+        <h2>露比專案管理系統</h2>
+      </div>
+    </header>
+    
+    <main id="app-content" style="padding-top: 0;">
+      
+      <nav id="top-nav">
+        <button class="nav-item active" onclick="switchView('accordion', this)"><i data-lucide="list-todo"></i><span>專案手風琴</span></button>
+        <button class="nav-item" onclick="switchView('fishbone', this)"><i data-lucide="git-commit"></i><span>魚骨進度</span></button>
+        <button class="nav-item" onclick="switchView('email', this)"><i data-lucide="mail"></i><span>Email</span></button>
+      </nav>
+
+      <div id="view-accordion" class="view-section active">
+        
+        <div class="card-mono" style="margin-bottom: 24px;">
+          <h3 style="display:flex; align-items:center; gap:8px;"><i data-lucide="cpu" style="width:18px;"></i> 將報價單轉為專案 (產出魚骨圖節點)</h3>
+          <div style="display:flex; flex-direction:column; gap:8px; margin-top:12px;">
+             <select id="quote-select" class="input-field">
+                <option value="">請選擇未轉換之客戶報價單...</option>
+             </select>
+             <div style="display:flex; gap:8px;">
+               <select id="quote-type-select" class="input-field" style="width:140px;">
+                  <option value="專案-單次服務">單次專案</option>
+                  <option value="專案-訂閱服務">訂閱專案</option>
+               </select>
+               <button id="btn-generate-project" class="btn-primary" style="flex:1;" onclick="handleGenerateProject()">
+                 <i data-lucide="sparkles" style="width:16px;height:16px;"></i> 產出魚骨圖節點與任務
+               </button>
+             </div>
+          </div>
+        </div>
+
+        <div style="display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 8px;">
+          <div>
+            <h2>已建檔專案追蹤總覽</h2>
+            <p class="caption">今日需執行任務專案已自動置頂，請點擊展開查看報價細節</p>
+          </div>
+        </div>
+        <div id="accordion-controls" style="display: flex; gap: var(--spacing-md); margin-top: var(--spacing-md); margin-bottom: var(--spacing-md); flex-wrap: wrap;">
+          <div style="flex: 1; min-width: 200px; position: relative;">
+            <i data-lucide="search" style="position: absolute; left: 12px; top: 12px; width: 20px; height: 20px; color: var(--text-muted);"></i>
+            <input type="text" id="search-project-input" class="input-field" placeholder="搜尋專案編號或客戶名稱..." style="padding-left: 40px;" oninput="filterAndRenderProjects()">
+          </div>
+          <select id="filter-status-select" class="input-field" style="width: 160px;" onchange="filterAndRenderProjects()">
+            <option value="all">全部狀態</option>
+            <option value="未排入">未排入</option>
+            <option value="已排入">已排入</option>
+          </select>
+        </div>
+        <div id="accordion-container"></div>
+      </div>
+
+      <div id="view-fishbone" class="view-section">
+        
+        <div class="card-mono" style="margin-bottom: 24px;">
+           <label style="font-weight:600; font-size:14px; margin-bottom:8px; display:block;">1. 選擇專案檢視魚骨圖與排程</label>
+           <select id="project-select-fishbone" class="input-field" onchange="handleFishboneProjectChange(this.value)">
+              <option value="">請選擇已建立之專案...</option>
+           </select>
+           
+           <div id="fishbone-project-info" style="margin-top:12px; display:none; padding:12px; background:#fff; border-radius:8px; border:1px solid var(--border-light);"></div>
+           
+           <hr class="divider" style="margin: 16px 0;" />
+           
+           <label style="font-weight:600; font-size:14px; margin-bottom:8px; display:block;">2. 進行日曆排程與狀態同步</label>
+           <div style="display:flex; gap:8px; flex-wrap:wrap;">
+             <input type="date" id="start-date-input" class="input-field" style="width:140px;">
+             <button id="btn-auto-schedule" class="btn-primary" onclick="handleAutoScheduleClick()">
+                <i data-lucide="calendar-plus" style="width:16px;height:16px;"></i> 自動排程
+             </button>
+             <button id="btn-next-month-schedule" class="btn-primary" style="background:#ea580c; color:#fff;" onclick="handleNextMonthScheduleClick()">
+                <i data-lucide="calendar-range" style="width:16px;height:16px;"></i> 產生次月排程
+             </button>
+             <button id="btn-refresh-schedule" class="btn-secondary" onclick="handleRefreshScheduleClick()">
+                <i data-lucide="refresh-cw" style="width:16px; height:16px;"></i> 刷新未來排程
+             </button>
+             <button id="btn-clear-schedule" class="btn-secondary" style="color: #ef4444; border-color: #ef4444;" onclick="handleClearScheduleClick()">
+                <i data-lucide="trash-2" style="width:16px; height:16px;"></i> 清除未來排程
+             </button>
+           </div>
+        </div>
+
+        <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 16px; flex-wrap: wrap; gap: 8px;">
+          <div>
+            <h2>魚骨進度追蹤圖</h2>
+            <p class="caption">點擊節點查看細項任務與工時紀錄</p>
+          </div>
+          <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+            <button class="btn-secondary" onclick="toggleAddCustomNodeInline()">
+              <i data-lucide="plus" style="width:16px; height:16px;"></i> 新增自訂節點
+            </button>
+          </div>
+        </div>
+        
+        <div id="inline-add-node-form" class="card-mono inline-action-panel" style="display: none; margin-bottom: 16px; border: 1px solid var(--text-main);">
+          <div style="display:flex; flex-direction:column; gap: 16px;">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <h3 style="margin:0;"><i data-lucide="plus-circle" style="width:16px; height:16px; vertical-align:middle; margin-right:4px;"></i> 新增客製化細項任務</h3>
+              <i data-lucide="x" style="width:16px; height:16px; cursor:pointer;" onclick="toggleAddCustomNodeInline()"></i>
+            </div>
+            <div><label style="display:block; font-size:13px; font-weight:600; margin-bottom:4px;">工作節點</label>
+            <input type="text" id="custom-node-name" class="input-field" placeholder="例如：特別審查會議"></div>
+            <div><label style="display:block; font-size:13px; font-weight:600; margin-bottom:4px;">細項任務名稱</label>
+            <input type="text" id="custom-task-name" class="input-field" placeholder="例如：準備審查簡報"></div>
+            <div style="display:flex; gap:16px; flex-wrap:wrap;">
+              <div style="flex:1; min-width:140px;"><label style="display:block; font-size:13px; font-weight:600; margin-bottom:4px;">預計執行日期</label>
+              <input type="date" id="custom-node-date" class="input-field"></div>
+              <div style="flex:1; min-width:140px;"><label style="display:block; font-size:13px; font-weight:600; margin-bottom:4px;">預估工時 (hr)</label>
+              <input type="number" id="custom-node-duration" class="input-field" placeholder="0.5" step="0.25" min="0.25"></div>
+            </div>
+            <div style="margin-top: 8px; text-align: right;">
+              <button class="btn-primary" id="btn-submit-custom-node" onclick="submitCustomNode()"><i data-lucide="save" style="width:16px;height:16px;"></i> 儲存並排入日曆</button>
+            </div>
+          </div>
+        </div>
+
+        <div id="fishbone-svg-container" style="overflow-x: auto; overflow-y: hidden; padding: 24px; min-height: 360px; border: 1px solid var(--border-light); border-radius: 8px; background: var(--bg-card); text-align: center;">
+        </div>
+        <div id="fishbone-detail-container" style="margin-top: 24px;"></div>
+      </div>
+
+      <div id="view-email" class="view-section">
+        <h2>Email 發送與歸檔中心</h2>
+        <p class="caption">點擊欄位自動記憶歷史常用選項</p>
+        
+        <div class="card-mono" style="margin-top: 16px;">
+          <div style="display: flex; flex-direction: column; gap: 12px;">
+            <div>
+              <label style="font-size: 13px; font-weight: 600; margin-bottom: 4px; display: block;">收件人 Email</label>
+              <input type="text" id="email-to" class="input-field" placeholder="example@gmail.com" autocomplete="off">
+            </div>
+            <div>
+              <label style="font-size: 13px; font-weight: 600; margin-bottom: 4px; display: block;">信件主旨</label>
+              <input type="text" id="email-subject" class="input-field" placeholder="請輸入主旨" autocomplete="off">
+            </div>
+            <div>
+              <label style="font-size: 13px; font-weight: 600; margin-bottom: 4px; display: block;">信件內容</label>
+              <textarea id="email-body" class="input-field" style="min-height: 120px;" placeholder="請輸入信件正文..." autocomplete="off"></textarea>
+            </div>
+            <div>
+              <label style="font-size: 13px; font-weight: 600; margin-bottom: 4px; display: block;">附件上傳 (最多 10 個，將歸檔至 Drive)</label>
+              <input type="file" id="email-files" class="input-field" multiple style="padding: 8px;">
+            </div>
+            <div style="text-align: right; margin-top: 8px;">
+              <button id="btn-submit-email" class="btn-primary" onclick="handleEmailSubmit()">
+                <i data-lucide="send" style="width:16px; height:16px;"></i> 發送並歸檔
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <h3 style="margin-top: 32px;">近期發送紀錄</h3>
+        <div id="email-history-container" style="display: flex; flex-direction: column; gap: 12px;">
+           <p class="caption">暫無新增紀錄</p>
+        </div>
+      </div>
+    </main>
+    
+    <div id="history-popover" class="popover">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 12px; border-bottom: 1px solid var(--border-light); padding-bottom: 8px;">
+        <h3 style="margin:0; font-size: 14px;">歷史紀錄時間軸</h3>
+        <i data-lucide="x" style="width:16px; height:16px; cursor:pointer;" onclick="closeHistoryPopover()"></i>
+      </div>
+      <div id="history-popover-content"></div>
+    </div>
+
+    <div id="toast-container"></div>
+    
+    <script>
+      const GAS_WEB_URL = "https://script.google.com/macros/s/AKfycby2Q7TodG2_uU1KV_kL8SZA4mK-GybbkZY6-jxBr2_es2JzyF6lXeTwFEFc0uflDcOx/exec"; 
+
+      const OfflineQueueManager = {
+        queueKey: 'ruby_offline_queue',
+        enqueue: function(action, payload) {
+          let queue = this.getQueue();
+          queue.push({ id: Date.now(), action, payload });
+          try {
+            localStorage.setItem(this.queueKey, JSON.stringify(queue));
+            console.log("[OfflineQueue] 已加入離線佇列", action);
+          } catch (e) {
+            showToast("本地暫存空間不足，部分離線操作可能無法保存", "error");
+          }
+        },
+        getQueue: function() {
+          try { return JSON.parse(localStorage.getItem(this.queueKey)) || []; }
+          catch(e) { return []; }
+        },
+        setQueue: function(queue) {
+          localStorage.setItem(this.queueKey, JSON.stringify(queue));
+        },
+        processQueue: async function() {
+          let queue = this.getQueue();
+          if (queue.length === 0) return;
+          showToast(`正在背景同步 ${queue.length} 筆離線操作...`, "info");
+          let newQueue = [];
+          for (let item of queue) {
+            try {
+              await apiClient.directCall(item.action, item.payload);
+            } catch (e) {
+              newQueue.push(item);
+            }
+          }
+          this.setQueue(newQueue);
+          if (newQueue.length === 0) showToast("離線操作已全數同步完成！", "info");
+          else showToast(`尚有 ${newQueue.length} 筆操作同步失敗`, "error");
+        }
+      };
+
+      window.addEventListener('online', () => {
+        showToast("網路已恢復連線，開始同步離線資料", "info");
+        OfflineQueueManager.processQueue();
+      });
+      window.addEventListener('offline', () => {
+        showToast("網路已斷線，您的操作將自動暫存於本地端", "error");
+      });
+
+      const apiClient = {
+        call: async function(action, payload = {}) {
+          const mutativeActions = ['executeAutoSchedule', 'scheduleNextMonth', 'updateSubTaskLog', 'addCustomNode', 'sendEmailWithAttachments', 'updateTaskSchedule', 'toggleTaskStatus', 'deleteTask', 'editLog', 'deleteLog', 'updateTaskOrder', 'batchUpdateTaskSchedule', 'refreshSchedule', 'clearFutureSchedule', 'createProjectFromQuote', 'deleteProjectFromSheet'];
+          if (!navigator.onLine && mutativeActions.includes(action)) {
+            OfflineQueueManager.enqueue(action, payload);
+            return { message: "已轉入離線佇列，連線後將自動同步" };
+          }
+          return this.directCall(action, payload);
+        },
+        directCall: async function(action, payload = {}) {
+          if (typeof google !== 'undefined' && google.script && google.script.run) {
+            return new Promise((resolve, reject) => {
+              google.script.run
+                .withSuccessHandler(resStr => {
+                  try {
+                    const parsed = typeof resStr === 'string' ? JSON.parse(resStr) : resStr;
+                    if (parsed.status === 'success') resolve(parsed.data);
+                    else reject(parsed.message || 'GAS 執行發生預期外錯誤');
+                  } catch(e) { reject('回傳資料解析失敗'); }
+                })
+                .withFailureHandler(err => reject(err))
+                .gasDirectCall(action, payload); 
+            });
+          } else {
+            try {
+              const url = new URL(GAS_WEB_URL);
+              const response = await fetch(url.toString(), {
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                body: JSON.stringify({ action: action, payload: payload })
+              });
+              const res = await response.json();
+              if (res.status === 'success') return res.data;
+              else throw new Error(res.message || 'Fetch API 執行失敗');
+            } catch (error) { throw error; }
+          }
+        }
+      };
+
+      function showToast(message, type = 'info') {
+        const container = document.getElementById('toast-container');
+        if (!container) return;
+        container.style.cssText = 'position: fixed; top: 24px; right: 24px; z-index: 9999; display: flex; flex-direction: column; align-items: flex-end;';
+        const toast = document.createElement('div');
+        toast.className = `toast-message toast-${type}`;
+        const bgColor = type === 'error' ? '#ff4d4f' : '#111111';
+        toast.style.cssText = `background: ${bgColor}; color: #ffffff; padding: 12px 24px; border-radius: 8px; margin-top: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); font-size: 14px; opacity: 0; transform: translateY(-10px); transition: all 0.3s ease;`;
+        toast.innerText = message;
+        container.appendChild(toast);
+        requestAnimationFrame(() => { toast.style.opacity = '1'; toast.style.transform = 'translateY(0)'; });
+        setTimeout(() => { toast.style.opacity = '0'; toast.style.transform = 'translateY(-10px)'; setTimeout(() => toast.remove(), 300); }, 3000);
+      }
+
+      function switchView(viewId, btnElement) {
+        document.querySelectorAll('.nav-item').forEach(btn => btn.classList.remove('active'));
+        if (btnElement) btnElement.classList.add('active');
+        document.querySelectorAll('.view-section').forEach(view => view.classList.remove('active'));
+        const targetView = document.getElementById(`view-${viewId}`);
+        if (targetView) targetView.classList.add('active');
+        if (viewId === 'fishbone') renderFishboneDiagram();
+      }
+
+      function renderSkeletonLoader(containerId, type = 'accordion') {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+        let html = '';
+        if (type === 'accordion') {
+          for (let i = 0; i < 3; i++) {
+            html += `
+              <div class="accordion-item" style="padding: 16px;">
+                <div style="display:flex; justify-content:space-between; margin-bottom:12px;">
+                  <div class="skeleton-box" style="width:50%; height:20px;"></div>
+                  <div class="skeleton-box" style="width:60px; height:20px; border-radius:12px;"></div>
+                </div>
+                <div class="skeleton-box" style="width:30%; height:14px; margin-bottom:12px;"></div>
+                <div class="skeleton-box" style="width:100%; height:6px; border-radius:3px;"></div>
+              </div>`;
+          }
+        } else if (type === 'fishbone') {
+          html = `
+            <svg width="450" height="120" xmlns="http://www.w3.org/2000/svg">
+              <line x1="20" y1="60" x2="430" y2="60" stroke="#E5E5E5" stroke-width="2" />
+              <circle cx="70" cy="60" r="18" fill="#FAFAFA" stroke="#E5E5E5" stroke-width="2" class="skeleton-circle" />
+              <circle cx="210" cy="60" r="18" fill="#FAFAFA" stroke="#E5E5E5" stroke-width="2" class="skeleton-circle" />
+              <circle cx="350" cy="60" r="18" fill="#FAFAFA" stroke="#E5E5E5" stroke-width="2" class="skeleton-circle" />
+            </svg>`;
+        }
+        container.innerHTML = html;
+      }
+
+      function renderEmptyState(containerId, iconName, message) {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+        container.innerHTML = `
+          <div style="text-align:center; padding: 48px 24px; color: var(--text-muted); border: 1px dashed var(--border-light); border-radius: 8px; display: flex; flex-direction: column; align-items: center; gap: 12px;">
+            <i data-lucide="${iconName}" style="width: 48px; height: 48px; color: var(--border-light);"></i>
+            <p>${message}</p>
+          </div>`;
+        lucide.createIcons();
+      }
+
+      async function performOptimisticUpdate(localUpdateFn, remoteApiFn, rollbackFn) {
+        try { localUpdateFn(); } catch (e) {}
+        try { await remoteApiFn(); } catch (e) {
+          rollbackFn(); showToast("系統同步失敗，已恢復原狀態", "error");
+        }
+      }
+
+      const EventHub = {
+        events: {},
+        on: function(eventName, callback) { if (!this.events[eventName]) this.events[eventName] = []; this.events[eventName].push(callback); },
+        emit: function(eventName, data) { if (this.events[eventName]) this.events[eventName].forEach(callback => callback(data)); }
+      };
+
+      const StateStore = {
+        state: { projectsList: [], serviceCatalog: [], contractItems: [], calendarEvents: [], activeProjectKey: null, emailMenu: {}, pendingQuotes: [] },
+        saveToLocalStorage: function() { try { localStorage.setItem("ruby_pm_state", JSON.stringify(this.state)); } catch (e) {} },
+        loadFromLocalStorage: function() { try { const cached = localStorage.getItem("ruby_pm_state"); if (cached) { this.state = JSON.parse(cached); EventHub.emit("stateLoadedFromCache", this.state); } } catch (e) {} },
+        setInitialData: function(data) {
+          this.state.projectsList = data.projectsList || []; 
+          this.state.serviceCatalog = data.serviceCatalog || [];
+          this.state.contractItems = data.contractItems || []; 
+          this.state.calendarEvents = data.calendarEvents || [];
+          this.state.emailMenu = data.emailHistoryMenu || {};
+          this.state.pendingQuotes = data.pendingQuotes || [];
+          this.saveToLocalStorage(); EventHub.emit("initialDataLoaded", this.state);
+        },
+        set: function(key, value) { this.state[key] = value; this.saveToLocalStorage(); EventHub.emit("stateUpdated:" + key, value); },
+        get: function(key) { return this.state[key]; }
+      };
+
+      function initHeaderUI() {
+        const pSelectEl = document.getElementById("project-select-fishbone");
+        const qSelectEl = document.getElementById("quote-select");
+        document.getElementById("start-date-input").value = new Date().toISOString().split('T')[0];
+
+        EventHub.on("initialDataLoaded", (state) => {
+          if (pSelectEl) {
+             pSelectEl.innerHTML = '<option value="">請選擇已建立之專案...</option>';
+             state.projectsList.forEach(project => {
+               const key = `${project.sheetType}_${project._rowId}`;
+               const opt = document.createElement("option"); opt.value = key;
+               opt.textContent = `[${project.companyName || project.clientName}] ${project.projectId} - ${project.serviceItem}`;
+               pSelectEl.appendChild(opt);
+             });
+             if (state.activeProjectKey) { 
+                 pSelectEl.value = state.activeProjectKey; 
+                 handleFishboneProjectChange(state.activeProjectKey); 
+             }
+          }
+
+          if (qSelectEl) {
+             qSelectEl.innerHTML = '<option value="">請選擇未轉換之客戶報價單...</option>';
+             state.pendingQuotes.forEach(q => {
+                const opt = document.createElement("option"); opt.value = q.quoteId;
+                opt.textContent = `[${q.quoteId}] ${q.clientName}`;
+                qSelectEl.appendChild(opt);
+             });
+          }
+        });
+      }
+
+      function handleFishboneProjectChange(val) {
+          StateStore.set("activeProjectKey", val);
+          const infoDiv = document.getElementById("fishbone-project-info");
+          if (!val) { infoDiv.style.display = "none"; renderFishboneDiagram(); return; }
+          
+          const [sheetType, rowIdStr] = val.split('_');
+          const rowId = parseInt(rowIdStr, 10);
+          const project = StateStore.get("projectsList").find(p => p.sheetType === sheetType && p._rowId === rowId);
+          
+          if(project) {
+              const btnNextMonth = document.getElementById("btn-next-month-schedule");
+              if (btnNextMonth) {
+                  btnNextMonth.style.display = project.sheetType === "專案-訂閱服務" ? "inline-flex" : "none";
+              }
+
+              infoDiv.innerHTML = `
+                  <div style="font-size:14px; display:flex; gap:16px; flex-wrap:wrap; align-items:center;">
+                      <span class="badge-mono" style="font-size:14px;">${project.projectId}</span>
+                      <span style="font-weight:700; font-size:16px;">${project.companyName || project.clientName} - ${project.serviceItem}</span>
+                      <span style="color:var(--text-muted);"><i data-lucide="user" style="width:14px;"></i> 客戶ID: ${project.clientId || 'N/A'}</span>
+                  </div>
+              `;
+              infoDiv.style.display = "block";
+              lucide.createIcons();
+              renderFishboneDiagram();
+          }
+      }
+
+      function getEmbedUrl(url) {
+         if(!url) return "";
+         if(url.includes("docs.google.com") && url.includes("/edit")) {
+             return url.replace(/\/edit.*/, "/preview");
+         }
+         if(url.includes("drive.google.com") && url.includes("/view")) {
+             return url.replace(/\/view.*/, "/preview");
+         }
+         return url;
+      }
+
+      async function handleGenerateProject() {
+         const quoteId = document.getElementById("quote-select").value;
+         const sheetType = document.getElementById("quote-type-select").value;
+         if(!quoteId) return showToast("請先選擇一張報價單", "error");
+
+         const btn = document.getElementById("btn-generate-project");
+         btn.disabled = true; 
+         btn.innerHTML = `<i data-lucide="loader" style="width:16px;height:16px; animation: spin 1s linear infinite;"></i> 產出中...`; lucide.createIcons();
+
+         try {
+            const result = await apiClient.call('createProjectFromQuote', { quoteId, sheetType });
+            showToast(result.message || "專案與魚骨圖產出成功！請切換至魚骨進度頁面進行排程。", "info");
+            const freshData = await apiClient.call('getInitialData'); StateStore.setInitialData(freshData);
+         } catch(e) {
+            showToast("產出失敗：" + e.toString(), "error");
+         } finally {
+            btn.disabled = false; btn.innerHTML = `<i data-lucide="sparkles" style="width:16px;height:16px;"></i> 產出魚骨圖節點與任務`; lucide.createIcons();
+         }
+      }
+
+      async function handleDeleteProject(projectId, sheetType, rowId) {
+         if(!confirm(`確定要徹底刪除專案 [${projectId}] 的追蹤紀錄嗎？\n注意：這只會刪除專案表的追蹤資料，報價單母檔仍會保留。`)) return;
+         
+         showToast("正在刪除專案...", "info");
+         try {
+            await apiClient.call('deleteProjectFromSheet', { projectId, sheetType, rowId });
+            showToast("專案刪除成功！", "info");
+            StateStore.set("activeProjectKey", null);
+            const freshData = await apiClient.call('getInitialData'); StateStore.setInitialData(freshData);
+         } catch(e) {
+            showToast("刪除失敗：" + e.toString(), "error");
+         }
+      }
+
+      const styleSheet = document.createElement("style"); styleSheet.innerText = `@keyframes spin { 100% { transform: rotate(360deg); } }`; document.head.appendChild(styleSheet);
+
+      async function handleAutoScheduleClick() {
+        const activeProjectKey = StateStore.get("activeProjectKey");
+        const startDate = document.getElementById("start-date-input").value;
+        const btn = document.getElementById("btn-auto-schedule");
+
+        if (!activeProjectKey || !startDate) { showToast("請先從上方選擇專案並填寫預計啟動日期！", "error"); return; }
+        
+        const [sheetType, rowIdStr] = activeProjectKey.split('_');
+        const project = StateStore.get("projectsList").find(p => p.sheetType === sheetType && p._rowId === parseInt(rowIdStr, 10));
+        if (!project) return;
+
+        btn.disabled = true; 
+        btn.innerHTML = `<i data-lucide="loader" style="width:16px; height:16px; animation: spin 1s linear infinite;"></i> 排程中 (0%)`; 
+        lucide.createIcons();
+
+        let progress = 0;
+        const simInterval = setInterval(() => {
+          progress += Math.floor(Math.random() * 20) + 10; 
+          if (progress > 90) progress = 90;
+          btn.innerHTML = `<i data-lucide="loader" style="width:16px; height:16px; animation: spin 1s linear infinite;"></i> 排程中 (${progress}%)`;
+          lucide.createIcons();
+        }, 500);
+
+        try {
+          const result = await apiClient.call('executeAutoSchedule', { 
+              projectId: project.projectId, 
+              sheetType: project.sheetType, 
+              rowId: project._rowId, 
+              serviceItem: project.serviceItem, 
+              startDate: startDate 
+          });
+          clearInterval(simInterval);
+          btn.innerHTML = `<i data-lucide="check" style="width:16px; height:16px;"></i> 排程成功`; 
+          lucide.createIcons();
+          showToast(result.message || "自動排程成功！", "info");
+          const freshData = await apiClient.call('getInitialData'); StateStore.setInitialData(freshData);
+        } catch (err) { 
+          clearInterval(simInterval);
+          showToast("排程失敗：" + err.toString(), "error");
+        } finally { 
+          setTimeout(() => {
+            btn.disabled = false; 
+            btn.innerHTML = `<i data-lucide="calendar-plus" style="width:16px; height:16px;"></i> 自動排程`; 
+            lucide.createIcons();
+          }, 2000);
+        }
+      }
+
+      async function handleNextMonthScheduleClick() {
+        const activeProjectKey = StateStore.get("activeProjectKey");
+        const startDate = document.getElementById("start-date-input").value;
+        const btn = document.getElementById("btn-next-month-schedule");
+
+        if (!activeProjectKey || !startDate) { showToast("請先選擇專案並填寫次月預計啟動日期！", "error"); return; }
+        
+        const [sheetType, rowIdStr] = activeProjectKey.split('_');
+        const project = StateStore.get("projectsList").find(p => p.sheetType === sheetType && p._rowId === parseInt(rowIdStr, 10));
+        if (!project || project.sheetType !== "專案-訂閱服務") return;
+
+        btn.disabled = true; 
+        btn.innerHTML = `<i data-lucide="loader" style="width:16px; height:16px; animation: spin 1s linear infinite;"></i> 處理中...`; 
+        lucide.createIcons();
+
+        try {
+          const result = await apiClient.call('scheduleNextMonth', { 
+              projectId: project.projectId, 
+              sheetType: project.sheetType, 
+              rowId: project._rowId, 
+              serviceItem: project.serviceItem, 
+              startDate: startDate 
+          });
+          btn.innerHTML = `<i data-lucide="check" style="width:16px; height:16px;"></i> 產生成功`; 
+          lucide.createIcons();
+          showToast(result.message || "次月排程成功！", "info");
+          const freshData = await apiClient.call('getInitialData'); StateStore.setInitialData(freshData);
+        } catch (err) { 
+          showToast("排程失敗：" + err.toString(), "error");
+        } finally { 
+          setTimeout(() => {
+            btn.disabled = false; 
+            btn.innerHTML = `<i data-lucide="calendar-range" style="width:16px; height:16px;"></i> 產生次月排程`; 
+            lucide.createIcons();
+          }, 2000);
+        }
+      }
+
+      async function handleRefreshScheduleClick() {
+        const activeProjectKey = StateStore.get("activeProjectKey");
+        if (!activeProjectKey) return showToast("請先選擇專案", "error");
+        
+        const [sheetType, rowIdStr] = activeProjectKey.split('_');
+        const project = StateStore.get("projectsList").find(p => p.sheetType === sheetType && p._rowId === parseInt(rowIdStr, 10));
+        if (!project) return;
+
+        const btn = document.getElementById("btn-refresh-schedule");
+        btn.disabled = true; 
+        btn.innerHTML = `<i data-lucide="loader" style="width:16px; height:16px; animation: spin 1s linear infinite;"></i> 刷新中 (0%)`; 
+        lucide.createIcons();
+        
+        let progress = 0;
+        const simInterval = setInterval(() => {
+          progress += Math.floor(Math.random() * 20) + 10;
+          if (progress > 90) progress = 90;
+          btn.innerHTML = `<i data-lucide="loader" style="width:16px; height:16px; animation: spin 1s linear infinite;"></i> 刷新中 (${progress}%)`;
+          lucide.createIcons();
+        }, 500);
+
+        try {
+          const result = await apiClient.call('refreshSchedule', { 
+              projectId: project.projectId, 
+              sheetType: project.sheetType, 
+              rowId: project._rowId, 
+              serviceItem: project.serviceItem 
+          });
+          clearInterval(simInterval);
+          btn.innerHTML = `<i data-lucide="check" style="width:16px; height:16px;"></i> 刷新成功`; 
+          lucide.createIcons();
+          showToast(result.message || "排程刷新成功！", "info");
+          const freshData = await apiClient.call('getInitialData'); StateStore.setInitialData(freshData);
+        } catch(e) {
+          clearInterval(simInterval);
+          showToast("刷新失敗：" + e.toString(), "error");
+        } finally {
+          setTimeout(() => {
+            btn.disabled = false; 
+            btn.innerHTML = `<i data-lucide="refresh-cw" style="width:16px; height:16px;"></i> 刷新未來排程`; 
+            lucide.createIcons();
+          }, 2000);
+        }
+      }
+
+      async function handleClearScheduleClick() {
+        const activeProjectKey = StateStore.get("activeProjectKey");
+        if (!activeProjectKey) return showToast("請先選擇專案", "error");
+        
+        const [sheetType, rowIdStr] = activeProjectKey.split('_');
+        const project = StateStore.get("projectsList").find(p => p.sheetType === sheetType && p._rowId === parseInt(rowIdStr, 10));
+        if (!project) return;
+
+        if (!confirm("確定要清除 [今日以後] 的所有排程嗎？\n已存在的歷史紀錄將會完美保留，但未來的行程將從日曆中刪除！")) return;
+        
+        const btn = document.getElementById("btn-clear-schedule");
+        btn.disabled = true; 
+        btn.innerHTML = `<i data-lucide="loader" style="width:16px; height:16px; animation: spin 1s linear infinite;"></i> 清除中...`; 
+        lucide.createIcons();
+
+        try {
+          const result = await apiClient.call('clearFutureSchedule', { 
+              projectId: project.projectId,
+              sheetType: project.sheetType, 
+              rowId: project._rowId, 
+              serviceItem: project.serviceItem
+          });
+          btn.innerHTML = `<i data-lucide="check" style="width:16px; height:16px;"></i> 清除成功`; 
+          lucide.createIcons();
+          showToast(result.message || "清除成功！", "info");
+          const freshData = await apiClient.call('getInitialData'); StateStore.setInitialData(freshData);
+        } catch(e) {
+          showToast("清除失敗：" + e.toString(), "error");
+        } finally {
+          setTimeout(() => {
+            btn.disabled = false; 
+            btn.innerHTML = `<i data-lucide="trash-2" style="width:16px; height:16px;"></i> 清除未來排程`; 
+            lucide.createIcons();
+          }, 2000);
+        }
+      }
+
+      function filterAndRenderProjects() {
+        const searchTerm = document.getElementById('search-project-input').value.toLowerCase().trim();
+        const filterStatus = document.getElementById('filter-status-select').value;
+        const allProjects = StateStore.get('projectsList') || [];
+        const filtered = allProjects.filter(proj => {
+          const matchSearch = proj.projectId.toLowerCase().includes(searchTerm) || proj.clientName.toLowerCase().includes(searchTerm) || (proj.companyName && proj.companyName.toLowerCase().includes(searchTerm));
+          const currentStatus = proj.scheduleStatus || "未排入";
+          let matchStatus = true;
+          if (filterStatus === "未排入") matchStatus = currentStatus.includes("未排入");
+          else if (filterStatus === "已排入") matchStatus = !currentStatus.includes("未排入");
+          return matchSearch && matchStatus;
+        });
+        renderProjectAccordion(filtered);
+      }
+
+      function renderProjectAccordion(filteredProjects = null) {
+        const containerId = 'accordion-container';
+        const container = document.getElementById(containerId);
+        if (!container) return;
+        const originalProjects = Array.isArray(filteredProjects) ? filteredProjects : (StateStore.get('projectsList') || []);
+        
+        if (originalProjects.length === 0) {
+          renderEmptyState(containerId, 'inbox', '找不到符合條件的專案資料'); return;
+        }
+
+        const now = new Date();
+        const todayFormatted = `${now.getFullYear()}/${String(now.getMonth()+1).padStart(2,'0')}/${String(now.getDate()).padStart(2,'0')}`;
+        const allEvents = StateStore.get('calendarEvents') || [];
+        
+        let projects = originalProjects.map(proj => {
+           let todayTasks = [];
+           let futureTasks = [];
+           let projEvents = allEvents.filter(e => e.projectId === proj.projectId && e.serviceItem === proj.serviceItem && e.startTime);
+           projEvents.forEach(e => {
+               let eDateObj = new Date(e.startTime);
+               let eDateStr = `${eDateObj.getFullYear()}/${String(eDateObj.getMonth()+1).padStart(2,'0')}/${String(eDateObj.getDate()).padStart(2,'0')}`;
+               if(eDateStr === todayFormatted) todayTasks.push(e);
+               else if(eDateObj > now) futureTasks.push(e);
+           });
+           todayTasks.sort((a,b) => new Date(a.startTime) - new Date(b.startTime));
+           futureTasks.sort((a,b) => new Date(a.startTime) - new Date(b.startTime));
+           return { ...proj, todayTasks, futureTasks };
+        });
+
+        projects.sort((a, b) => {
+           let aHas = a.todayTasks.length > 0;
+           let bHas = b.todayTasks.length > 0;
+           if(aHas && !bHas) return -1;
+           if(!aHas && bHas) return 1;
+           if(aHas && bHas) return new Date(a.todayTasks[0].startTime) - new Date(b.todayTasks[0].startTime);
+           return 0;
+        });
+
+        let html = '';
+        projects.forEach(proj => {
+          const status = proj.scheduleStatus || "未排入";
+          const badgeClass = status.includes("未排入") ? "badge-mono outline" : "badge-mono";
+          let loggedTasks = 0;
+          if(proj.workLog && Array.isArray(proj.workLog)) {
+              loggedTasks = new Set(proj.workLog.map(l => l.taskName)).size;
+          }
+          
+          let iframeSrc = getEmbedUrl(proj.quoteUrl);
+          let quoteHtml = iframeSrc
+              ? `<div style="margin-bottom:16px;">
+                  <div style="font-weight:600; margin-bottom:8px; display:flex; align-items:center; gap:6px;"><i data-lucide="file-search" style="width:16px;"></i> 報價單即時預覽</div>
+                  <iframe src="${iframeSrc}" class="quote-iframe"></iframe>
+                 </div>`
+              : `<div class="caption" style="margin-bottom:16px;">無對應之報價單連結可預覽</div>`;
+
+          const hasCompletedTasks = Object.values(proj.taskStatus || {}).includes(true);
+          const progress = Math.min(100, Math.floor((loggedTasks / 5) * 100)); 
+          const renderTaskList = (tasks) => tasks.map(t => `<div style="padding:4px 0; font-size:13px; display:flex; gap:8px;"><span style="color:var(--text-muted);">${new Date(t.startTime).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}</span> <span>${t.taskName}</span></div>`).join('');
+          
+          const hasTodayTasks = proj.todayTasks.length > 0;
+          const todayBadge = hasTodayTasks 
+              ? `<span class="badge-mono" style="background:#fef08a; color:#854d0e; font-size:11px; font-weight:700; padding:2px 6px; border-radius:4px; margin-right:8px; display:inline-flex; align-items:center; gap:2px;"><i data-lucide="zap" style="width:12px;height:12px;"></i> 今日有任務</span>` 
+              : '';
+
+          const projKey = `${proj.sheetType}_${proj._rowId}`;
+
+          html += `
+            <div class="accordion-item" data-project-key="${projKey}">
+              <div class="accordion-header" onclick="toggleAccordion(this)">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                  <div style="font-weight: 600; font-size: 15px; display:flex; align-items:center; flex-wrap:wrap; gap:4px;">
+                    ${todayBadge}
+                    [${proj.projectId}] ${proj.companyName || proj.clientName}
+                  </div>
+                  <span class="${badgeClass}">${status}</span>
+                </div>
+                <div style="font-size: 13px; color: var(--text-secondary);">客戶ID：${proj.clientId || 'N/A'} | 服務項目：${proj.serviceItem}</div>
+                <div style="display: flex; align-items: center; gap: 8px; margin-top: 4px;">
+                  <div class="progress-bar-bg"><div class="progress-bar-fill" style="width: ${progress}%;"></div></div>
+                  <span style="font-size: 12px; color: var(--text-muted); min-width: 30px; text-align: right;">${progress}%</span>
+                </div>
+              </div>
+              <div class="accordion-body">
+                ${quoteHtml}
+                
+                ${hasTodayTasks ? `
+                  <div style="margin-bottom:12px;">
+                    <div style="font-weight:600; font-size:13px; color:#ea580c; margin-bottom:4px;">今日需執行任務</div>
+                    ${renderTaskList(proj.todayTasks)}
+                  </div>
+                ` : '<div class="caption" style="margin-bottom:12px;">今日無排定任務</div>'}
+                
+                <hr class="divider">
+                
+                ${proj.futureTasks.length > 0 ? `
+                  <div style="margin-bottom:16px;">
+                    <div style="font-weight:600; font-size:13px; margin-bottom:4px;">明日以後排定任務 (${proj.futureTasks.length})</div>
+                    ${renderTaskList(proj.futureTasks.slice(0,3))}
+                    ${proj.futureTasks.length > 3 ? '<div class="caption">...及其他更多任務</div>' : ''}
+                  </div>
+                ` : ''}
+
+                <div style="display:flex; flex-direction:column; gap:8px;">
+                  <button class="btn-primary" style="width:100%;" onclick="jumpToFishbone('${proj.sheetType}', '${proj._rowId}')">
+                    <i data-lucide="arrow-right" style="width:16px;height:16px;"></i> 一鍵前往魚骨圖查看與編輯排程
+                  </button>
+                  ${hasCompletedTasks ? `
+                  <button class="btn-secondary" style="width:100%; border: 1px solid #111111; color: #111111;" onclick="jumpToEmail('${proj.sheetType}', '${proj._rowId}')">
+                    <i data-lucide="mail" style="width:16px;height:16px;"></i> 專案有已完成任務，一鍵前往 Email
+                  </button>` : ''}
+                  <button class="btn-secondary" style="width:100%; color:#ef4444; border-color:#ef4444;" onclick="handleDeleteProject('${proj.projectId}', '${proj.sheetType}', ${proj._rowId})">
+                    <i data-lucide="trash-2" style="width:16px;height:16px;"></i> 刪除專案追蹤紀錄
+                  </button>
+                </div>
+              </div>
+            </div>`;
+        });
+        container.innerHTML = html; lucide.createIcons();
+      }
+
+      function jumpToFishbone(sheetType, rowId) {
+         fishboneActiveNode = null; 
+         const key = `${sheetType}_${rowId}`;
+         StateStore.set('activeProjectKey', key);
+         const selectEl = document.getElementById("project-select-fishbone");
+         if(selectEl) { 
+            selectEl.value = key; 
+         }
+         switchView('fishbone', document.querySelectorAll('.nav-item')[1]);
+      }
+
+      function jumpToEmail(sheetType, rowId) {
+         const key = `${sheetType}_${rowId}`;
+         StateStore.set('activeProjectKey', key);
+         switchView('email', document.querySelectorAll('.nav-item')[2]);
+      }
+
+      function toggleAccordion(headerEl) {
+        const currentItem = headerEl.closest('.accordion-item');
+        const currentBody = currentItem.querySelector('.accordion-body');
+        const isCurrentlyOpen = currentBody.style.display === 'block';
+        
+        document.querySelectorAll('.accordion-body').forEach(body => { body.style.display = 'none'; });
+        
+        if (!isCurrentlyOpen) {
+          currentBody.style.display = 'block';
+          const projKey = currentItem.getAttribute('data-project-key');
+          if (projKey && StateStore.get('activeProjectKey') !== projKey) {
+            StateStore.set('activeProjectKey', projKey);
+          }
+        }
+      }
+
+      let fishboneActiveNode = null;
+      let draggedTaskName = null;
+      let draggedItemElement = null;
+
+      function selectFishboneNode(nodeKey) { 
+          fishboneActiveNode = String(nodeKey).trim(); 
+          renderFishboneDiagram(); 
+      }
+
+      function renderFishboneDiagram() {
+        const activeProjectKey = StateStore.get('activeProjectKey');
+        const containerId = 'fishbone-svg-container';
+        const detailContainer = document.getElementById('fishbone-detail-container');
+        
+        if (!activeProjectKey) {
+          renderEmptyState(containerId, 'folder-search', '請先自專案手風琴中選擇並產出專案以查看魚骨圖');
+          detailContainer.innerHTML = ''; return;
+        }
+        
+        const [sheetType, rowIdStr] = activeProjectKey.split('_');
+        const rowId = parseInt(rowIdStr, 10);
+        const project = StateStore.get('projectsList').find(p => p.sheetType === sheetType && p._rowId === rowId);
+        
+        if (!project) return;
+        const activeProjId = project.projectId;
+        
+        const calendarEvents = StateStore.get('calendarEvents') || [];
+        const projectEvents = calendarEvents.filter(e => e.projectId === activeProjId && e.serviceItem === project.serviceItem);
+        const eventMap = {};
+        projectEvents.forEach(e => { eventMap[`${e.nodeName}_${e.taskName}`] = e.startTime; });
+
+        const taskStatusObj = project.taskStatus || {};
+        let customNodes = [];
+        try {
+          const rawCustom = project.customNodes;
+          if (Array.isArray(rawCustom)) customNodes = rawCustom; 
+          else if (rawCustom && Array.isArray(rawCustom.nodes)) customNodes = rawCustom.nodes;
+        } catch(e) {}
+        if (!Array.isArray(customNodes)) customNodes = [];
+        
+        let nodesMap = new Map();
+        
+        customNodes.forEach(cn => {
+           if (!cn.node) return;
+           if (taskStatusObj[cn.task] === 'DELETED') return; 
+           let key = cn.node + '_' + (cn.phase || '單次');
+           if (!nodesMap.has(key)) nodesMap.set(key, { name: cn.node, phase: cn.phase||'單次', title: cn.title||cn.node, tasks: [] });
+           const sTime = eventMap[`${cn.node}_${cn.task}`] || cn.date || null;
+           nodesMap.get(key).tasks.push({ name: cn.task, duration: cn.duration, date: cn.date, startTime: sTime });
+        });
+        
+        const nodesList = Array.from(nodesMap.values());
+        if (nodesList.length === 0) {
+           renderEmptyState(containerId, 'activity', '該專案無可用之工作節點'); detailContainer.innerHTML = ''; return;
+        }
+
+        if (fishboneActiveNode) fishboneActiveNode = String(fishboneActiveNode).trim();
+        
+        if (!fishboneActiveNode || !nodesMap.has(fishboneActiveNode)) {
+            if (nodesList.length > 0) {
+                fishboneActiveNode = nodesList[0].name + '_' + nodesList[0].phase;
+            }
+        }
+        
+        const isSub = project.sheetType === '專案-訂閱服務';
+        
+        let onceNodes = [];
+        let recurringNodes = [];
+        nodesList.forEach(n => {
+            if (n.phase === '循環') recurringNodes.push(n);
+            else onceNodes.push(n);
+        });
+
+        const nodeWidth = 180; 
+        const svgContainer = document.getElementById(containerId);
+        const todayD = new Date();
+        const todayFormatted = `${todayD.getFullYear()}/${String(todayD.getMonth()+1).padStart(2,'0')}/${String(todayD.getDate()).padStart(2,'0')}`;
+        
+        let svgHtml = '';
+        
+        const genNodeSvg = (node, index, cx, cy, isTop) => {
+           let isActive = fishboneActiveNode === (node.name + '_' + node.phase);
+           
+           let fill = isActive ? '#111111' : '#FFFFFF';
+           let textFill = isActive ? '#FFFFFF' : '#111111';
+           let strokeColor = isActive ? '#111111' : '#E5E5E5'; 
+           let accentColor = '#ea580c'; 
+
+           let totalHours = 0;
+           let completedHours = 0;
+           node.tasks.forEach(t => {
+               let dur = parseFloat(t.duration) || 0;
+               totalHours += dur;
+               if (taskStatusObj[t.name] === true) {
+                   completedHours += dur;
+               }
+           });
+           let progressPercent = totalHours === 0 ? 0 : Math.round((completedHours / totalHours) * 100);
+
+           const pr = 10; 
+           const pcx = cx - 48; 
+           const pcy = cy;
+           const circumference = 2 * Math.PI * pr;
+           const strokeDashoffset = circumference - (progressPercent / 100) * circumference;
+           let ringColor = progressPercent === 100 ? '#111111' : accentColor;
+           
+           let progressSvg = `
+               <g style="opacity: ${totalHours > 0 ? 1 : 0.4};">
+                   <circle cx="${pcx}" cy="${pcy}" r="${pr}" fill="none" stroke="#F4F4F5" stroke-width="1.5" />
+                   <circle cx="${pcx}" cy="${pcy}" r="${pr}" fill="none" stroke="${ringColor}" stroke-width="1.5" stroke-dasharray="${circumference}" stroke-dashoffset="${strokeDashoffset}" stroke-linecap="round" transform="rotate(-90 ${pcx} ${pcy})" style="transition: stroke-dashoffset 0.5s ease;" />
+                   <text x="${pcx}" y="${pcy + 2.5}" font-size="7" font-family="'Inter', sans-serif" font-weight="600" text-anchor="middle" fill="#666666">${progressPercent}</text>
+               </g>
+           `;
+
+           let nodeDateStr = "尚未排程";
+           const scheduledTasks = node.tasks.filter(t => t.startTime);
+           if (scheduledTasks.length > 0) {
+               scheduledTasks.sort((a,b) => new Date(a.startTime) - new Date(b.startTime));
+               const d = new Date(scheduledTasks[0].startTime);
+               nodeDateStr = `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}`;
+           }
+           
+           let isTodayNode = (nodeDateStr === todayFormatted);
+           let finalDateColor = nodeDateStr === "尚未排程" ? "#999999" : (isTodayNode ? "#111111" : accentColor);
+           let dateFontWeight = nodeDateStr === "尚未排程" ? "400" : "700";
+
+           let maxChars = 8; 
+           let nameLines = [];
+           for (let i = 0; i < node.name.length; i += maxChars) {
+               nameLines.push(node.name.slice(i, i + maxChars));
+           }
+
+           let nameHtml = '';
+           let dateY;
+           let lineStartY = isTop ? cy + 24 : cy - 24; 
+           let lineEndY = isTop ? cy + 45 : cy - 45; 
+
+           if (isTop) {
+               dateY = cy - 40 - (nameLines.length * 18); 
+               nameLines.forEach((line, idx) => {
+                   let ly = cy - 34 - ((nameLines.length - 1 - idx) * 18);
+                   nameHtml += `<text x="${cx}" y="${ly}" font-size="13" font-family="'Noto Sans TC', sans-serif" font-weight="600" text-anchor="middle" fill="#111111" letter-spacing="0.5">${line}</text>`;
+               });
+           } else {
+               nameLines.forEach((line, idx) => {
+                   let ly = cy + 44 + (idx * 18);
+                   nameHtml += `<text x="${cx}" y="${ly}" font-size="13" font-family="'Noto Sans TC', sans-serif" font-weight="600" text-anchor="middle" fill="#111111" letter-spacing="0.5">${line}</text>`;
+               });
+               dateY = cy + 46 + (nameLines.length * 18); 
+           }
+
+           let dateBgHtml = '';
+           if (isTodayNode) {
+               dateBgHtml = `<rect x="${cx - 40}" y="${dateY - 13}" width="80" height="18" rx="4" fill="#FDE047" />`;
+           }
+
+           return `
+             <g style="cursor:pointer; outline: none;" onclick="selectFishboneNode('${node.name}_${node.phase}')">
+               <!-- 隱形點擊區域 -->
+               <rect x="${cx - 70}" y="${isTop ? dateY - 20 : cy - 30}" width="140" height="${isTop ? cy - dateY + 50 : dateY - cy + 50}" fill="transparent" />
+
+               <!-- 1. 繪製黃色高光背景 -->
+               ${dateBgHtml}
+               <!-- 2. 繪製日期文字 -->
+               <text x="${cx}" y="${dateY}" font-size="12" font-family="'Inter', sans-serif" font-weight="${dateFontWeight}" text-anchor="middle" fill="${finalDateColor}" letter-spacing="0.5">${nodeDateStr}</text>
+
+               <!-- 動態換行後的工作節點名稱 -->
+               ${nameHtml}
+
+               <!-- 連接主軸的極細淡灰虛線 -->
+               <line x1="${cx}" y1="${lineStartY}" x2="${cx}" y2="${lineEndY}" stroke="#E5E5E5" stroke-width="1.5" stroke-dasharray="3 3" />
+
+               <!-- 圓圈主體 -->
+               <circle cx="${cx}" cy="${cy}" r="24" fill="${fill}" stroke="${strokeColor}" stroke-width="2" style="transition: all 0.3s ease;" />
+               
+               <!-- 圓圈內的純粹數字 -->
+               <text x="${cx}" y="${cy + 5}" font-size="16" font-family="'Inter', sans-serif" font-weight="600" text-anchor="middle" fill="${textFill}">${index+1}</text>
+               
+               <!-- 左側：極致質感進度環 -->
+               ${progressSvg}
+             </g>
+           `;
+        };
+
+        if (isSub && (onceNodes.length > 0 || recurringNodes.length > 0)) {
+            const maxLen = Math.max(onceNodes.length, recurringNodes.length);
+            const svgWidth = Math.max(svgContainer.clientWidth || 800, maxLen * nodeWidth + 100);
+            svgHtml = `<svg width="${svgWidth}" height="480" xmlns="http://www.w3.org/2000/svg" style="display: block; margin: 0 auto; font-family: 'Inter', 'Noto Sans TC', sans-serif;">`;
+            
+            if (onceNodes.length > 0) {
+                const cyTop = 130;
+                svgHtml += `<line x1="20" y1="${cyTop + 40}" x2="${svgWidth - 20}" y2="${cyTop + 40}" stroke="#111111" stroke-width="3" stroke-linecap="round" />`;
+                svgHtml += `<text x="20" y="30" font-size="14" font-weight="700" fill="#ea580c">◆ 單次任務 / 專案啟動與結案流程</text>`;
+                onceNodes.forEach((node, index) => {
+                    svgHtml += genNodeSvg(node, index, 80 + index * nodeWidth, cyTop, true);
+                });
+            }
+            
+            if (recurringNodes.length > 0) {
+                const cyBtm = 330;
+                svgHtml += `<line x1="20" y1="${cyBtm - 40}" x2="${svgWidth - 20}" y2="${cyBtm - 40}" stroke="#3b82f6" stroke-width="3" stroke-dasharray="8 4" stroke-linecap="round" />`;
+                svgHtml += `<text x="20" y="230" font-size="14" font-weight="700" fill="#3b82f6">◆ 重複循環 / 每週或每月執行流程</text>`;
+                recurringNodes.forEach((node, index) => {
+                    svgHtml += genNodeSvg(node, index, 80 + index * nodeWidth, cyBtm, false);
+                });
+            }
+            svgHtml += `</svg>`;
+        } else {
+            const svgWidth = Math.max(svgContainer.clientWidth || 800, nodesList.length * nodeWidth + 100);
+            const centerY = 160;
+            svgHtml = `<svg width="${svgWidth}" height="320" xmlns="http://www.w3.org/2000/svg" style="display: block; margin: 0 auto; font-family: 'Inter', 'Noto Sans TC', sans-serif;">`;
+            svgHtml += `<line x1="20" y1="${centerY}" x2="${svgWidth - 20}" y2="${centerY}" stroke="#111111" stroke-width="3" stroke-linecap="round" />`;
+            
+            nodesList.forEach((node, index) => {
+               const cx = 80 + index * nodeWidth;
+               const isTop = index % 2 === 0; 
+               const cy = isTop ? 100 : 220;
+               svgHtml += genNodeSvg(node, index, cx, cy, isTop);
+            });
+            svgHtml += `</svg>`;
+        }
+        
+        svgContainer.innerHTML = svgHtml;
+        
+        const activeData = nodesMap.get(fishboneActiveNode);
+        
+        if (!activeData) {
+            detailContainer.innerHTML = '<p class="caption">無法載入節點資料，請重新選擇節點。</p>';
+            return;
+        }
+        
+        const currentOrder = project.taskOrder && project.taskOrder[activeData.name];
+        if (currentOrder && Array.isArray(currentOrder)) {
+            activeData.tasks.sort((a, b) => {
+                let idxA = currentOrder.indexOf(a.name); let idxB = currentOrder.indexOf(b.name);
+                if (idxA === -1) idxA = 999; if (idxB === -1) idxB = 999;
+                return idxA - idxB;
+            });
+        }
+
+        let subBadge = (isSub && activeData.phase === '循環') ? `<span class="badge-mono outline" style="margin-left:8px; border-color:#3b82f6; color:#3b82f6;">[重複循環]</span>` : '';
+
+        let detailsHtml = `
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom: 16px; border-bottom: 2px solid #111111; padding-bottom: 12px;">
+            <div>
+               <h3 style="margin: 0 0 4px 0; font-size: 16px; display: flex; align-items: center; gap: 8px;">
+                 <span class="badge-mono">節點 ${activeData.name}</span>
+                 ${activeData.title || activeData.name} ${subBadge}
+               </h3>
+               ${activeData.phase ? `<div class="caption">軌道任務屬性：${activeData.phase}</div>` : ''}
+            </div>
+          </div>
+          <div id="tasks-container" style="display:flex; flex-direction:column; gap: 12px;">`;
+        
+        if (activeData.tasks.length === 0) {
+            detailsHtml += `<p class="caption">此節點無細項任務紀錄</p>`;
+        } else {
+           activeData.tasks.forEach((t, i) => {
+              let taskDateStr = "尚未排程";
+              let rawDate = "";
+              if (t.startTime) {
+                  const d = new Date(t.startTime);
+                  taskDateStr = `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}`;
+                  rawDate = d.toISOString().split('T')[0];
+              }
+
+              const isCompleted = taskStatusObj[t.name] === true;
+              const hasLog = project.workLog && project.workLog.some(l => l.taskName === t.name && !l.isSystem);
+              let cardBg = "#FFFFFF", textColor = "#111111", mutedColor = "var(--text-muted)", borderColor = "var(--border-light)";
+              if (isCompleted) { cardBg = "#111111"; textColor = "#FFFFFF"; mutedColor = "#999999"; borderColor = "#333333"; } 
+              else if (hasLog) { cardBg = "#F4F4F5"; }
+              
+              let isTodayTask = (taskDateStr === todayFormatted);
+              let dateStyle = isTodayTask 
+                  ? 'background:#fef08a; color:#854d0e; padding:2px 6px; border-radius:4px; font-weight:700;' 
+                  : `color:${t.startTime ? (isCompleted ? '#FFFFFF' : 'var(--color-accent)') : ''}; font-weight:500;`;
+
+              const editDateId = `inline-edit-date-${i}`;
+              const addLogId = `inline-add-log-${i}`;
+
+              detailsHtml += `
+                <div class="card-mono draggable-task" draggable="true" data-task-name="${t.name}"
+                     ondragstart="handleDragStart(event)" ondragover="handleDragOver(event)"
+                     ondrop="handleDrop(event, '${project.projectId}', '${activeData.name}')"
+                     ondragenter="handleDragEnter(event)" ondragleave="handleDragLeave(event)" ondragend="handleDragEnd(event)"
+                     style="display:flex; justify-content:space-between; align-items:center; background:${cardBg}; color:${textColor}; border-color:${borderColor}; flex-wrap: wrap; gap: 8px; position:relative;">
+                  
+                  <div style="flex:1; min-width:200px; display:flex; align-items:center; gap: 12px;">
+                    <i data-lucide="grip-vertical" style="width:16px; height:16px; color:${mutedColor}; cursor:grab;" title="拖曳可排序"></i>
+                    <div>
+                        <div style="font-weight:600; display:flex; align-items:center; gap:8px;">${t.name}</div>
+                        <div class="caption" style="color:${mutedColor}; margin-top:4px; display:flex; align-items:center; gap: 8px; flex-wrap:wrap;">
+                          <span>預估工時: ${t.duration || '0.25'} hr</span>
+                          <span style="color:${borderColor};">|</span>
+                          <span style="${dateStyle} display:flex; align-items:center; gap:4px;">
+                            <i data-lucide="calendar" style="width:12px; height:12px;"></i> ${taskDateStr}
+                          </span>
+                        </div>
+                    </div>
+                  </div>
+                  
+                  <div style="display:flex; gap: 4px; flex-wrap:wrap;">
+                    <button class="btn-icon success ${isCompleted ? 'active' : ''}" title="${isCompleted ? '取消完成' : '標示完成'}" onclick="toggleTaskCompletion('${project.projectId}', '${project.sheetType}', ${project._rowId}, '${t.name}', ${isCompleted})">
+                      <i data-lucide="${isCompleted ? 'check-circle-2' : 'check'}" style="width:16px; height:16px;"></i>
+                    </button>
+                    <button class="btn-icon" title="排程 / 改期" onclick="toggleInlinePanel('${editDateId}')">
+                      <i data-lucide="calendar-clock" style="width:16px; height:16px;"></i>
+                    </button>
+                    <button class="btn-icon" title="寫日誌" onclick="toggleInlinePanel('${addLogId}')">
+                      <i data-lucide="pencil" style="width:16px; height:16px;"></i>
+                    </button>
+                    <button class="btn-icon danger" title="刪除任務" onclick="confirmDeleteTask('${project.projectId}', '${project.sheetType}', ${project._rowId}, '${activeData.name}', '${t.name}')">
+                      <i data-lucide="trash-2" style="width:16px; height:16px;"></i>
+                    </button>
+                  </div>
+                </div>
+                
+                <div id="${editDateId}" class="inline-action-panel card-mono" style="display:none; margin-top:-8px; border-top:none; border-radius:0 0 8px 8px; background:#fff; border-color:var(--border-light);">
+                  <div style="display:flex; align-items:center; gap:12px;">
+                     <label style="font-size:13px; font-weight:600;">新排程日期：</label>
+                     <input type="date" id="date-input-${i}" class="input-field" value="${rawDate}" style="width:160px; height:36px;">
+                     <button class="btn-primary" style="height:36px; font-size:13px;" onclick="submitEditTaskDate('${project.projectId}', '${project.sheetType}', ${project._rowId}, '${project.serviceItem}', '${activeData.name}', '${t.name}', 'date-input-${i}')">儲存</button>
+                     <button class="btn-icon ghost" onclick="toggleInlinePanel('${editDateId}')"><i data-lucide="x" style="width:16px;height:16px;"></i></button>
+                  </div>
+                </div>
+
+                <div id="${addLogId}" class="inline-action-panel card-mono" style="display:none; margin-top:-8px; border-top:none; border-radius:0 0 8px 8px; background:#fff; border-color:var(--border-light);">
+                   <div style="display:flex; flex-direction:column; gap:8px;">
+                     <label style="font-size:13px; font-weight:600;">撰寫日誌</label>
+                     <textarea id="log-input-${i}" class="input-field" placeholder="紀錄執行細節..." style="min-height:60px;"></textarea>
+                     <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <div style="display:flex; align-items:center; gap:8px;">
+                           <span style="font-size:13px;">完成工時:</span>
+                           <input type="number" id="log-dur-${i}" class="input-field" step="0.25" min="0.25" value="0.25" style="width:80px; height:32px;">
+                        </div>
+                        <div style="display:flex; gap:8px;">
+                           <button class="btn-secondary" style="height:32px;" onclick="toggleInlinePanel('${addLogId}')">取消</button>
+                           <button class="btn-primary" style="height:32px;" onclick="submitTaskLog('${project.projectId}', '${project.sheetType}', ${project._rowId}, '${project.serviceItem}', '${activeData.name}', '${t.name}', 'log-input-${i}', 'log-dur-${i}')">寫入</button>
+                        </div>
+                     </div>
+                   </div>
+                </div>
+              `;
+           });
+        }
+        
+        detailsHtml += `</div>
+          <button class="btn-secondary" style="width: 100%; border: 1px dashed var(--text-muted); margin-top: 12px; background: transparent; color: var(--text-secondary);" onclick="toggleAddCustomNodeInline('${activeData.name}')">
+            <i data-lucide="plus" style="width:16px; height:16px;"></i> 新增細項任務至此節點
+          </button>
+        `;
+
+        detailsHtml += `
+          <hr class="divider" style="margin: 24px 0 16px 0;" />
+          <h3 style="font-size: 14px; margin-bottom: 12px; display:flex; align-items:center; gap:6px;">
+            <i data-lucide="list-tree" style="width:16px; height:16px; color:var(--text-secondary);"></i> 專案全局歷史日誌總覽
+          </h3>
+        `;
+        
+        let projectLogs = [];
+        if (project.workLog && Array.isArray(project.workLog)) {
+            projectLogs = project.workLog.filter(l => l.logContent && l.logContent.trim() !== "");
+            projectLogs.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)); 
+        }
+        
+        if (projectLogs.length === 0) {
+            detailsHtml += `<div style="text-align:center; padding: 24px; color:var(--text-muted); font-size:13px; background:var(--bg-card); border-radius:8px;">目前無任何日誌紀錄</div>`;
+        } else {
+            detailsHtml += `<div style="display:flex; flex-direction:column; gap: 12px;">`;
+            projectLogs.forEach((l, i) => {
+                const isSystem = l.isSystem;
+                const d = new Date(l.timestamp);
+                const formattedDate = `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+                
+                let actionButtons = '';
+                const editLogId = `inline-edit-hist-log-${i}`;
+
+                if (!isSystem) {
+                   const encodedContent = encodeURIComponent(l.logContent);
+                   actionButtons = `
+                     <div style="display:flex; gap:4px; opacity: 0.6;">
+                        <button class="btn-icon ghost" title="修改日誌" onclick="toggleInlinePanel('${editLogId}')">
+                            <i data-lucide="edit-2" style="width:14px; height:14px;"></i>
+                        </button>
+                        <button class="btn-icon ghost danger" title="刪除日誌" onclick="confirmDeleteLog('${project.projectId}', '${project.sheetType}', ${project._rowId}, '${l.timestamp}')">
+                            <i data-lucide="trash-2" style="width:14px; height:14px;"></i>
+                        </button>
+                     </div>
+                   `;
+                }
+
+                detailsHtml += `
+                  <div class="card-mono" style="padding: 12px; background: ${isSystem ? 'var(--bg-card)' : '#FFFFFF'};">
+                     <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom: 6px;">
+                        <div>
+                            <span style="font-weight:600; font-size:13px; color:${isSystem ? 'var(--text-secondary)' : 'var(--text-main)'};">${l.taskName}</span>
+                            <span class="caption" style="color:var(--text-muted); margin-left:8px;">${formattedDate}</span>
+                        </div>
+                        ${actionButtons}
+                     </div>
+                     <div style="font-size:13px; color:${isSystem ? 'var(--text-muted)' : 'var(--text-secondary)'}; line-height: 1.5;">${l.logContent}</div>
+                     ${!isSystem ? `<div class="caption" style="margin-top:8px; display:flex; align-items:center; gap:4px; color:var(--text-muted);"><i data-lucide="clock" style="width:12px; height:12px;"></i> 工時: ${l.duration} hr</div>` : ''}
+                  </div>
+                  
+                  ${!isSystem ? `
+                  <div id="${editLogId}" class="inline-action-panel card-mono" style="display:none; margin-top:-8px; border-top:none; border-radius:0 0 8px 8px; background:#fff; border-color:var(--border-light);">
+                     <textarea id="hist-log-text-${i}" class="input-field" style="min-height:60px; margin-bottom:8px;">${l.logContent}</textarea>
+                     <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <input type="number" id="hist-log-dur-${i}" class="input-field" step="0.25" min="0" value="${l.duration}" style="width:80px; height:32px;">
+                        <div style="display:flex; gap:8px;">
+                           <button class="btn-secondary" style="height:32px;" onclick="toggleInlinePanel('${editLogId}')">取消</button>
+                           <button class="btn-primary" style="height:32px;" onclick="submitEditLog('${project.projectId}', '${project.sheetType}', ${project._rowId}, '${l.timestamp}', 'hist-log-text-${i}', 'hist-log-dur-${i}')">更新</button>
+                        </div>
+                     </div>
+                  </div>` : ''}
+                `;
+            });
+            detailsHtml += `</div>`;
+        }
+
+        detailContainer.innerHTML = detailsHtml; lucide.createIcons();
+      }
+
+      function toggleInlinePanel(panelId) {
+          document.querySelectorAll('.inline-action-panel').forEach(el => {
+              if (el.id !== panelId && el.id !== 'inline-add-node-form') el.style.display = 'none';
+          });
+          const el = document.getElementById(panelId);
+          if (el) el.style.display = (el.style.display === 'none' || el.style.display === '') ? 'block' : 'none';
+      }
+      
+      function toggleAddCustomNodeInline(prefilledNodeName = '') {
+          const el = document.getElementById('inline-add-node-form');
+          const nodeInput = document.getElementById('custom-node-name');
+          if (el.style.display === 'block') { el.style.display = 'none'; return; }
+          if (prefilledNodeName) {
+              nodeInput.value = prefilledNodeName;
+              nodeInput.readOnly = true;
+              nodeInput.style.background = '#f5f5f5';
+          } else {
+              nodeInput.value = ''; nodeInput.readOnly = false; nodeInput.style.background = '#fff';
+          }
+          document.getElementById("custom-node-date").value = new Date().toISOString().split('T')[0];
+          el.style.display = 'block';
+          window.scrollTo({ top: el.offsetTop - 80, behavior: 'smooth' });
+      }
+
+      function handleDragStart(e) {
+          draggedTaskName = e.currentTarget.getAttribute('data-task-name');
+          draggedItemElement = e.currentTarget;
+          e.dataTransfer.effectAllowed = 'move';
+          setTimeout(() => e.currentTarget.classList.add('dragging'), 0);
+      }
+      function handleDragEnter(e) {
+          e.preventDefault(); const targetCard = e.currentTarget;
+          if (targetCard !== draggedItemElement) targetCard.style.borderTop = '2px solid var(--text-main)';
+      }
+      function handleDragOver(e) { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; }
+      function handleDragLeave(e) { e.currentTarget.style.borderTop = ''; }
+      function handleDrop(e, projectId, nodeName) {
+          e.stopPropagation(); const targetCard = e.currentTarget;
+          if (draggedItemElement) draggedItemElement.classList.remove('dragging');
+          document.querySelectorAll('.draggable-task').forEach(el => el.style.borderTop = '');
+          if (!targetCard || targetCard === draggedItemElement) return;
+
+          const container = document.getElementById('tasks-container');
+          const allCards = Array.from(container.querySelectorAll('.draggable-task'));
+          const draggedIdx = allCards.indexOf(draggedItemElement);
+          const targetIdx = allCards.indexOf(targetCard);
+          if (draggedIdx < targetIdx) container.insertBefore(draggedItemElement, targetCard.nextSibling);
+          else container.insertBefore(draggedItemElement, targetCard);
+
+          const newOrder = Array.from(container.querySelectorAll('.draggable-task')).map(el => el.getAttribute('data-task-name'));
+          updateTaskOrderAndPromptDates(projectId, nodeName, newOrder);
+      }
+      function handleDragEnd(e) {
+          if (draggedItemElement) draggedItemElement.classList.remove('dragging');
+          document.querySelectorAll('.draggable-task').forEach(el => el.style.borderTop = '');
+      }
+
+      async function updateTaskOrderAndPromptDates(projectId, nodeName, newOrder) {
+          const activeProjectKey = StateStore.get('activeProjectKey');
+          const [sheetType, rowIdStr] = activeProjectKey.split('_');
+          const rowId = parseInt(rowIdStr, 10);
+          
+          const projList = StateStore.get('projectsList');
+          const targetProj = projList.find(p => p.sheetType === sheetType && p._rowId === rowId);
+          if (targetProj) {
+              if (!targetProj.taskOrder) targetProj.taskOrder = {};
+              targetProj.taskOrder[nodeName] = newOrder;
+              StateStore.set('projectsList', projList);
+          }
+          apiClient.call('updateTaskOrder', { projectId, sheetType, rowId, nodeName, newOrder });
+          showToast("排序已儲存！請記得點擊時鐘按鈕修改排程日期。", "info");
+      }
+
+      async function submitEditLog(projectId, sheetType, rowId, timestamp, textInputId, durInputId) {
+          const newContent = document.getElementById(textInputId).value.trim();
+          const newDuration = parseFloat(document.getElementById(durInputId).value) || 0;
+          if (!newContent) return showToast("內容不能為空", "error");
+          showToast("正在更新日誌...", "info"); 
+          try { 
+              await apiClient.call('editLog', { projectId, rowId, sheetType, timestamp, newContent, newDuration });
+              showToast("日誌已更新！", "info"); const freshData = await apiClient.call('getInitialData'); StateStore.setInitialData(freshData); renderFishboneDiagram();
+          } catch(e) { showToast("更新失敗：" + e.toString(), "error"); }
+      }
+
+      function confirmDeleteLog(projectId, sheetType, rowId, timestamp) {
+          if(!confirm("確定要刪除這筆日誌嗎？此動作無法復原。")) return;
+          showToast("正在刪除...", "info");
+          apiClient.call('deleteLog', { projectId, rowId, sheetType, timestamp }).then(async () => {
+              showToast("日誌已刪除！", "info"); const freshData = await apiClient.call('getInitialData'); StateStore.setInitialData(freshData); renderFishboneDiagram();
+          }).catch(e => showToast("刪除失敗：" + e.toString(), "error"));
+      }
+
+      function confirmDeleteTask(projectId, sheetType, rowId, nodeName, taskName) {
+          if(!confirm(`確定要刪除任務「${taskName}」嗎？\n刪除後會從列表中消失，但歷史紀錄仍會保留。`)) return;
+          showToast("正在刪除任務...", "info");
+          apiClient.call('deleteTask', { projectId, rowId, sheetType, nodeName, taskName }).then(async () => {
+              showToast("任務已成功刪除！", "info"); const freshData = await apiClient.call('getInitialData'); StateStore.setInitialData(freshData); renderFishboneDiagram();
+          }).catch(e => showToast("刪除失敗：" + e.toString(), "error"));
+      }
+
+      function toggleTaskCompletion(projectId, sheetType, rowId, taskName, currentStatus) {
+          const newStatus = !currentStatus;
+          const oldState = JSON.parse(JSON.stringify(StateStore.get('projectsList')));
+          performOptimisticUpdate(
+            () => {
+                const projList = StateStore.get('projectsList');
+                const targetProj = projList.find(p => p.sheetType === sheetType && p._rowId === rowId);
+                if (targetProj) {
+                    if (!targetProj.taskStatus) targetProj.taskStatus = {};
+                    if (newStatus) targetProj.taskStatus[taskName] = true; else delete targetProj.taskStatus[taskName];
+                    StateStore.set('projectsList', projList); renderFishboneDiagram();
+                }
+            },
+            async () => { await apiClient.call('toggleTaskStatus', { projectId, rowId, sheetType, taskName, isCompleted: newStatus }); },
+            () => { StateStore.set('projectsList', oldState); renderFishboneDiagram(); }
+          );
+      }
+
+      async function submitEditTaskDate(projectId, sheetType, rowId, serviceItem, nodeName, taskName, inputId) {
+          const newDate = document.getElementById(inputId).value;
+          if (!newDate) { showToast("請選擇一個日期", "error"); return; }
+          showToast("正在更新排程...", "info"); 
+          try {
+              await apiClient.call('updateTaskSchedule', { projectId, sheetType, rowId, serviceItem, nodeName, taskName, newDate });
+              showToast("排程日期更新成功！", "info");
+              const freshData = await apiClient.call('getInitialData'); StateStore.setInitialData(freshData); renderFishboneDiagram();
+          } catch(e) { showToast("更新失敗：" + e.toString(), "error"); }
+      }
+
+      function submitTaskLog(projectId, sheetType, rowId, serviceItem, nodeName, taskName, textInputId, durInputId) {
+        const logContent = document.getElementById(textInputId).value.trim();
+        const duration = parseFloat(document.getElementById(durInputId).value);
+        if (!logContent || isNaN(duration)) return showToast("請填寫日誌並確保工時正確", "error");
+
+        const newLog = { taskName, logContent, duration, timestamp: new Date().toISOString() };
+        const oldState = JSON.parse(JSON.stringify(StateStore.get('projectsList')));
+        
+        performOptimisticUpdate(
+          () => { 
+            const projList = StateStore.get('projectsList');
+            const targetProj = projList.find(p => p.sheetType === sheetType && p._rowId === rowId);
+            if(targetProj) {
+                if(!targetProj.workLog) targetProj.workLog = [];
+                targetProj.workLog.push(newLog);
+                StateStore.set('projectsList', projList);
+                showToast("日誌已暫存，背景同步中...", "info"); renderFishboneDiagram(); 
+            }
+          },
+          async () => { 
+            await apiClient.call('updateSubTaskLog', { projectId, rowId, sheetType, nodeName, taskName, logContent, duration });
+            showToast("日誌成功寫入雲端資料庫", "info");
+          },
+          () => { StateStore.set('projectsList', oldState); renderFishboneDiagram(); }
+        );
+      }
+
+      function setupAutocomplete(inputId, dataList, parseOnSelect) {
+          const input = document.getElementById(inputId);
+          if(!input) return;
+          let wrapper = input.parentNode;
+          if(wrapper.className !== 'ac-wrapper') {
+              wrapper = document.createElement('div');
+              wrapper.className = 'ac-wrapper';
+              wrapper.style.position = 'relative';
+              input.parentNode.insertBefore(wrapper, input);
+              wrapper.appendChild(input);
+          }
+          
+          let list = wrapper.querySelector('.ac-list');
+          if(!list) {
+              list = document.createElement('div');
+              list.className = 'ac-list card-mono';
+              list.style.cssText = 'position:absolute; top:100%; left:0; right:0; max-height:200px; overflow-y:auto; background:#fff; z-index:1000; display:none; padding:0; margin-top:4px;';
+              wrapper.appendChild(list);
+          }
+
+          input.addEventListener('focus', () => renderList(dataList));
+          input.addEventListener('input', () => renderList(dataList));
+          document.addEventListener('click', (e) => { if(!wrapper.contains(e.target)) list.style.display='none'; });
+
+          function renderList(listData) {
+              const val = input.value.toLowerCase();
+              const filtered = listData.filter(item => item.toLowerCase().includes(val));
+              list.innerHTML = '';
+              if(filtered.length === 0) { list.style.display = 'none'; return; }
+              filtered.forEach(item => {
+                  const div = document.createElement('div');
+                  div.style.cssText = 'padding:8px 12px; cursor:pointer; border-bottom:1px solid var(--border-light); font-size:13px;';
+                  div.textContent = item;
+                  div.onmousedown = (e) => { 
+                      e.preventDefault(); 
+                      input.value = parseOnSelect ? parseOnSelect(item) : item; 
+                      list.style.display='none'; 
+                  };
+                  div.onmouseover = () => div.style.background = '#f5f5f5';
+                  div.onmouseout = () => div.style.background = '#fff';
+                  list.appendChild(div);
+              });
+              list.style.display = 'block';
+          }
+      }
+
+      function renderEmailView() {
+        const menu = StateStore.get('emailMenu');
+        if (menu) {
+            setupAutocomplete('email-to', menu.emails || [], (item) => {
+               const match = item.match(/(?:【.*?】\s*)?([^\s]+)\s*\(\d+\)/);
+               return match ? match[1] : item;
+            });
+            setupAutocomplete('email-subject', menu.subjects || [], (item) => item.replace(/\s*\(\d+\)$/, ''));
+            setupAutocomplete('email-body', menu.bodies || [], (item) => item.replace(/\s*\(\d+\)$/, ''));
+        }
+      }
+
+      async function handleEmailSubmit() {
+        const activeProjectKey = StateStore.get('activeProjectKey');
+        if (!activeProjectKey) return showToast("請先從頂部選擇專案", "error");
+        
+        const [sheetType, rowIdStr] = activeProjectKey.split('_');
+        const project = StateStore.get("projectsList").find(p => p.sheetType === sheetType && p._rowId === parseInt(rowIdStr, 10));
+        if (!project) return;
+
+        const toEmail = document.getElementById('email-to').value.trim();
+        const subject = document.getElementById('email-subject').value.trim();
+        const body = document.getElementById('email-body').value.trim();
+        const fileInput = document.getElementById('email-files');
+        
+        if(!toEmail || !subject || !body) return showToast("請填寫收件人、主旨與內容", "error");
+        if(fileInput.files.length > 10) return showToast("最多只能上傳 10 個檔案", "error");
+
+        const btn = document.getElementById('btn-submit-email');
+        btn.disabled = true; btn.innerHTML = `<i data-lucide="loader" style="width:16px;height:16px; animation: spin 1s linear infinite;"></i> 處理中...`; lucide.createIcons();
+
+        try {
+           const attachmentsList = [];
+           for (let file of fileInput.files) {
+              const base64Str = await readFileAsBase64(file);
+              attachmentsList.push({ fileName: file.name, mimeType: file.type, base64Data: base64Str.split(',')[1] });
+           }
+           const payload = { projectId: project.projectId, clientName: project.clientName, subject, toEmail, body, attachmentsList };
+           
+           const histContainer = document.getElementById('email-history-container');
+           if (histContainer.innerHTML.includes("暫無新增紀錄")) histContainer.innerHTML = '';
+           const tempId = "temp-" + Date.now();
+           const optimisticCard = `<div id="${tempId}" class="card-mono" style="opacity:0.6; transition:opacity 0.3s;"><div style="font-weight:600;">[發送中] ${subject}</div><div class="caption">To: ${toEmail} | 附件: ${attachmentsList.length}</div></div>`;
+           histContainer.insertAdjacentHTML('afterbegin', optimisticCard);
+           
+           document.getElementById('email-to').value = ''; document.getElementById('email-subject').value = '';
+           document.getElementById('email-body').value = ''; fileInput.value = '';
+           
+           const result = await apiClient.call('sendEmailWithAttachments', payload);
+           
+           document.getElementById(tempId).style.opacity = '1';
+           document.getElementById(tempId).querySelector('div').innerText = `[已發送] ${subject}`;
+           showToast("Email 與附件已成功發送並歸檔雲端！", "info");
+
+           const freshData = await apiClient.call('getInitialData'); StateStore.setInitialData(freshData); renderEmailView();
+        } catch (e) { showToast("寄送失敗: " + e.toString(), "error");
+        } finally { btn.disabled = false; btn.innerHTML = `<i data-lucide="send" style="width:16px;height:16px;"></i> 發送並歸檔`; lucide.createIcons(); }
+      }
+
+      function readFileAsBase64(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = (e) => resolve(e.target.result);
+            reader.onerror = (e) => reject(e);
+            reader.readAsDataURL(file);
+        });
+      }
+
+      async function submitCustomNode() {
+        const activeProjectKey = StateStore.get('activeProjectKey');
+        if (!activeProjectKey) return showToast("請先從頂部選擇專案", "error");
+        
+        const [sheetType, rowIdStr] = activeProjectKey.split('_');
+        const project = StateStore.get("projectsList").find(p => p.sheetType === sheetType && p._rowId === parseInt(rowIdStr, 10));
+        if (!project) return;
+
+        const nodeName = document.getElementById('custom-node-name').value.trim();
+        const taskName = document.getElementById('custom-task-name').value.trim();
+        const date = document.getElementById('custom-node-date').value;
+        const duration = parseFloat(document.getElementById('custom-node-duration').value) || 0.5;
+
+        if (!nodeName || !taskName || !date) { showToast("請填寫所有必填欄位！", "error"); return; }
+        const btn = document.getElementById('btn-submit-custom-node');
+        btn.disabled = true; btn.innerHTML = `<i data-lucide="loader" style="width:16px;height:16px; animation: spin 1s linear infinite;"></i> 寫入中...`; lucide.createIcons();
+
+        try {
+          const payload = { 
+              projectId: project.projectId, 
+              sheetType: project.sheetType, 
+              rowId: project._rowId, 
+              serviceItem: project.serviceItem, 
+              nodeName, taskName, date, duration 
+          };
+          const result = await apiClient.call('addCustomNode', payload);
+          showToast(result.message || "任務已新增成功！", "info");
+          document.getElementById('inline-add-node-form').style.display = 'none';
+          const freshData = await apiClient.call('getInitialData'); StateStore.setInitialData(freshData); renderFishboneDiagram();
+        } catch (err) {
+          showToast("新增失敗：" + err.toString(), "error");
+        } finally {
+          btn.disabled = false; btn.innerHTML = `<i data-lucide="save" style="width:16px;height:16px;"></i> 儲存並排入日曆`; lucide.createIcons();
+        }
+      }
+
+      // ==========================================
+      // 全域初始化
+      // ==========================================
+      window.onload = async () => {
+        lucide.createIcons(); 
+        initHeaderUI();
+
+        EventHub.on("stateLoadedFromCache", () => { filterAndRenderProjects(); renderFishboneDiagram(); renderEmailView(); });
+        EventHub.on("initialDataLoaded", () => { filterAndRenderProjects(); renderFishboneDiagram(); renderEmailView(); });
+        EventHub.on("stateUpdated:activeProjectKey", () => { renderFishboneDiagram(); });
+
+        StateStore.loadFromLocalStorage();
+
+        try {
+          renderSkeletonLoader('accordion-container', 'accordion');
+          renderSkeletonLoader('fishbone-svg-container', 'fishbone');
+
+          const data = await apiClient.call('getInitialData');
+          StateStore.setInitialData(data);
+          
+          showToast("成功連線，已讀取雲端最新資料！", "info");
+
+        } catch(e) {
+          const errorMsg = typeof e === 'string' ? e : (e.message || JSON.stringify(e));
+          showToast("讀取失敗：" + errorMsg, "error");
+        }
+      };
+    </script>
+  </body>
+</html>
