@@ -320,6 +320,7 @@
     <div id="toast-container"></div>
     
     <script>
+      // 💥 已鎖定 x-goog-api-key 在 Headers 的正確呼叫方式與 Gemini 模型
       const GAS_WEB_URL = "https://script.google.com/macros/s/AKfycby2Q7TodG2_uU1KV_kL8SZA4mK-GybbkZY6-jxBr2_es2JzyF6lXeTwFEFc0uflDcOx/exec"; 
 
       const OfflineQueueManager = {
@@ -987,7 +988,7 @@
            if (taskStatusObj[cn.task] === 'DELETED') return; 
            let key = cn.node + '_' + (cn.phase || '單次');
            if (!nodesMap.has(key)) nodesMap.set(key, { name: cn.node, phase: cn.phase||'單次', title: cn.title||cn.node, tasks: [] });
-           const sTime = eventMap[`${cn.node}_${cn.task}`] || cn.date || null;
+           const sTime = eventMap[`${cn.node}_${cn.task}`] || cn.startTime || null; 
            nodesMap.get(key).tasks.push({ name: cn.task, duration: cn.duration, date: cn.date, startTime: sTime });
         });
         
