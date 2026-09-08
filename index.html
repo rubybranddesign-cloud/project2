@@ -61,6 +61,7 @@
         font-weight: 500; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 8px; transition: background-color 0.2s ease;
       }
       .btn-secondary:hover { background-color: #FAFAFA; }
+      .btn-secondary:disabled { border-color: var(--border-light); color: var(--text-muted); cursor: not-allowed; }
 
       .btn-icon {
         background: #FFFFFF; border: 1px solid var(--border-light); border-radius: 8px; 
@@ -99,15 +100,11 @@
         display: none; width: 280px; max-height: 300px; overflow-y: auto;
       }
       .popover.active { display: block; }
-      .timeline-item { border-left: 2px solid var(--border-dark); padding-left: 12px; margin-bottom: 12px; position: relative; }
-      .timeline-item::before {
-        content: ''; position: absolute; left: -5px; top: 2px; width: 8px; height: 8px;
-        border-radius: 50%; background: var(--text-main);
-      }
 
       .skeleton-box { background-color: var(--border-light); border-radius: 4px; animation: skeletonPulse 1.5s ease-in-out infinite; }
       .skeleton-circle { background-color: var(--border-light); border-radius: 50%; animation: skeletonPulse 1.5s ease-in-out infinite; }
       @keyframes skeletonPulse { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
+      @keyframes spin { 100% { transform: rotate(360deg); } }
 
       .accordion-item { background: var(--bg-main); border: 1px solid var(--border-light); border-radius: 8px; margin-bottom: var(--spacing-sm); overflow: hidden; transition: border-color 0.2s ease; }
       .accordion-header { padding: var(--spacing-md); cursor: pointer; display: flex; flex-direction: column; gap: 8px; background: var(--bg-main); transition: background-color 0.2s ease; }
@@ -130,9 +127,7 @@
         background: #FFFFFF; border: 1px solid var(--border-light); border-radius: 8px; 
         color: var(--text-secondary); cursor: pointer; transition: all 0.2s ease; font-weight: 500; font-size: 13px;
       }
-      .nav-item.active {
-        background: #111111; color: #FFFFFF; border-color: #111111;
-      }
+      .nav-item.active { background: #111111; color: #FFFFFF; border-color: #111111; }
       .nav-item i { width: 16px; height: 16px; }
 
       .view-section { display: none; animation: fadeIn 0.3s ease; }
@@ -144,6 +139,29 @@
       .inline-action-panel { animation: fadeIn 0.3s ease; }
 
       .quote-iframe { width: 100%; height: 350px; border: 1px solid var(--border-light); border-radius: 8px; background: #fff; }
+
+      /* === 全域質感 Loading 蓋板 === */
+      #global-loader-overlay {
+        position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+        background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(4px);
+        z-index: 99999; display: none; flex-direction: column;
+        align-items: center; justify-content: center; transition: opacity 0.3s ease;
+      }
+      .loader-card {
+        background: #FFFFFF; padding: 32px 40px; border-radius: 16px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.08); border: 1px solid var(--border-light);
+        text-align: center; width: 90%; max-width: 360px;
+      }
+      .loader-bar-bg {
+        width: 100%; height: 8px; background: #F4F4F5;
+        border-radius: 4px; margin-top: 24px; overflow: hidden;
+      }
+      .loader-bar-fill {
+        height: 100%; background: #111111; width: 0%; 
+        transition: width 0.3s ease-out; border-radius: 4px;
+      }
+      .loader-text { margin-top: 16px; font-weight: 600; font-size: 15px; color: #111111; }
+      .loader-subtext { margin-top: 4px; font-size: 13px; color: var(--text-muted); }
     </style>
   </head>
   <body>
@@ -230,6 +248,9 @@
              <button id="btn-clear-schedule" class="btn-secondary" style="color: #ef4444; border-color: #ef4444;" onclick="handleClearScheduleClick()">
                 <i data-lucide="trash-2" style="width:16px; height:16px;"></i> 清除未來排程
              </button>
+             <button id="btn-sync-calendar" class="btn-secondary" style="color: #3b82f6; border-color: #3b82f6;" onclick="handleSyncCalendarClick()">
+                <i data-lucide="refresh-ccw" style="width:16px; height:16px;"></i> 同步日曆異動
+             </button>
            </div>
         </div>
 
@@ -309,19 +330,57 @@
       </div>
     </main>
     
-    <div id="history-popover" class="popover">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 12px; border-bottom: 1px solid var(--border-light); padding-bottom: 8px;">
-        <h3 style="margin:0; font-size: 14px;">歷史紀錄時間軸</h3>
-        <i data-lucide="x" style="width:16px; height:16px; cursor:pointer;" onclick="closeHistoryPopover()"></i>
-      </div>
-      <div id="history-popover-content"></div>
-    </div>
-
     <div id="toast-container"></div>
     
+    <!-- 全域質感 Loading 蓋板 -->
+    <div id="global-loader-overlay">
+      <div class="loader-card">
+        <i data-lucide="loader-2" style="width:36px; height:36px; color:#111111; animation: spin 1s linear infinite;"></i>
+        <div id="loader-title" class="loader-text">處理中...</div>
+        <div id="loader-subtitle" class="loader-subtext">請稍候，正在與雲端同步資料</div>
+        <div class="loader-bar-bg"><div id="loader-progress-bar" class="loader-bar-fill"></div></div>
+      </div>
+    </div>
+    
     <script>
-      // 💥 已鎖定 GAS 網址與前端雙棲環境防禦機制
+      // 💥 GAS 網址
       const GAS_WEB_URL = "https://script.google.com/macros/s/AKfycby2Q7TodG2_uU1KV_kL8SZA4mK-GybbkZY6-jxBr2_es2JzyF6lXeTwFEFc0uflDcOx/exec"; 
+
+      // === 全域 Loading 系統 ===
+      let globalLoaderInterval = null;
+      
+      function showGlobalLoader(title, subtitle = "請稍候，正在處理中...") {
+        document.getElementById('loader-title').innerText = title;
+        document.getElementById('loader-subtitle').innerText = subtitle;
+        document.getElementById('loader-progress-bar').style.width = '0%';
+        const overlay = document.getElementById('global-loader-overlay');
+        overlay.style.display = 'flex';
+        overlay.style.opacity = '0';
+        requestAnimationFrame(() => overlay.style.opacity = '1');
+      }
+
+      function updateGlobalLoader(percent, subtitle) {
+        document.getElementById('loader-progress-bar').style.width = `${percent}%`;
+        if (subtitle) document.getElementById('loader-subtitle').innerText = subtitle;
+      }
+
+      function hideGlobalLoader() {
+        const overlay = document.getElementById('global-loader-overlay');
+        overlay.style.opacity = '0';
+        setTimeout(() => overlay.style.display = 'none', 300);
+        if (globalLoaderInterval) clearInterval(globalLoaderInterval);
+      }
+
+      // 模擬進度條推進器 (最高推到 85%)
+      function startSimulatedProgress(initialSubtitle) {
+        let progress = 0;
+        if (globalLoaderInterval) clearInterval(globalLoaderInterval);
+        globalLoaderInterval = setInterval(() => {
+          progress += Math.floor(Math.random() * 15) + 5;
+          if (progress > 85) progress = 85;
+          updateGlobalLoader(progress, `${initialSubtitle} (${progress}%)`);
+        }, 600);
+      }
 
       const OfflineQueueManager = {
         queueKey: 'ruby_offline_queue',
@@ -370,7 +429,7 @@
 
       const apiClient = {
         call: async function(action, payload = {}) {
-          const mutativeActions = ['executeAutoSchedule', 'scheduleNextMonth', 'updateSubTaskLog', 'addCustomNode', 'sendEmailWithAttachments', 'updateTaskSchedule', 'toggleTaskStatus', 'deleteTask', 'editLog', 'deleteLog', 'updateTaskOrder', 'batchUpdateTaskSchedule', 'refreshSchedule', 'clearFutureSchedule', 'createProjectFromQuote', 'deleteProjectFromSheet'];
+          const mutativeActions = ['executeAutoSchedule', 'scheduleNextMonth', 'updateSubTaskLog', 'addCustomNode', 'sendEmailWithAttachments', 'updateTaskSchedule', 'toggleTaskStatus', 'deleteTask', 'editLog', 'deleteLog', 'updateTaskOrder', 'batchUpdateTaskSchedule', 'refreshSchedule', 'clearFutureSchedule', 'createProjectFromQuote', 'deleteProjectFromSheet', 'syncCalendarNow'];
           if (!navigator.onLine && mutativeActions.includes(action)) {
             OfflineQueueManager.enqueue(action, payload);
             return { message: "已轉入離線佇列，連線後將自動同步" };
@@ -393,7 +452,6 @@
             });
           } else {
             try {
-              // 💥 優化 CORS 呼叫，確保 text/plain 與 redirect 處理，避免 preflight 阻擋
               const url = new URL(GAS_WEB_URL);
               const response = await fetch(url.toString(), {
                 method: 'POST',
@@ -412,7 +470,7 @@
       function showToast(message, type = 'info') {
         const container = document.getElementById('toast-container');
         if (!container) return;
-        container.style.cssText = 'position: fixed; top: 24px; right: 24px; z-index: 9999; display: flex; flex-direction: column; align-items: flex-end;';
+        container.style.cssText = 'position: fixed; top: 24px; right: 24px; z-index: 999999; display: flex; flex-direction: column; align-items: flex-end;';
         const toast = document.createElement('div');
         toast.className = `toast-message toast-${type}`;
         const bgColor = type === 'error' ? '#ff4d4f' : '#111111';
@@ -571,46 +629,36 @@
          return url;
       }
 
+      // ==========================================
+      // 全域 Loading 操作改寫開始
+      // ==========================================
       async function handleGenerateProject() {
          const quoteId = document.getElementById("quote-select").value;
          const sheetType = document.getElementById("quote-type-select").value;
          if(!quoteId) return showToast("請先選擇一張報價單", "error");
 
-         const btn = document.getElementById("btn-generate-project");
-         btn.disabled = true; 
-         btn.innerHTML = `<i data-lucide="loader" style="width:16px;height:16px; animation: spin 1s linear infinite;"></i> 產出中...`; lucide.createIcons();
+         showGlobalLoader("產出專案與魚骨圖", "正在轉換報價單資料...");
+         startSimulatedProgress("建立節點與寫入專案總表中");
 
          try {
             const result = await apiClient.call('createProjectFromQuote', { quoteId, sheetType });
+            updateGlobalLoader(90, "產出完畢，正在刷新資料...");
+            const freshData = await apiClient.call('getInitialData'); 
+            StateStore.setInitialData(freshData);
+            
+            updateGlobalLoader(100, "完成！");
             showToast(result.message || "專案與魚骨圖產出成功！請切換至魚骨進度頁面進行排程。", "info");
-            const freshData = await apiClient.call('getInitialData'); StateStore.setInitialData(freshData);
          } catch(e) {
+            clearInterval(globalLoaderInterval);
             showToast("產出失敗：" + e.toString(), "error");
          } finally {
-            btn.disabled = false; btn.innerHTML = `<i data-lucide="sparkles" style="width:16px;height:16px;"></i> 產出魚骨圖節點與任務`; lucide.createIcons();
+            setTimeout(hideGlobalLoader, 600);
          }
       }
-
-      async function handleDeleteProject(projectId, sheetType, rowId) {
-         if(!confirm(`確定要徹底刪除專案 [${projectId}] 的追蹤紀錄嗎？\n注意：這只會刪除專案表的追蹤資料，報價單母檔仍會保留。`)) return;
-         
-         showToast("正在刪除專案...", "info");
-         try {
-            await apiClient.call('deleteProjectFromSheet', { projectId, sheetType, rowId });
-            showToast("專案刪除成功！", "info");
-            StateStore.set("activeProjectKey", null);
-            const freshData = await apiClient.call('getInitialData'); StateStore.setInitialData(freshData);
-         } catch(e) {
-            showToast("刪除失敗：" + e.toString(), "error");
-         }
-      }
-
-      const styleSheet = document.createElement("style"); styleSheet.innerText = `@keyframes spin { 100% { transform: rotate(360deg); } }`; document.head.appendChild(styleSheet);
 
       async function handleAutoScheduleClick() {
         const activeProjectKey = StateStore.get("activeProjectKey");
         const startDate = document.getElementById("start-date-input").value;
-        const btn = document.getElementById("btn-auto-schedule");
 
         if (!activeProjectKey || !startDate) { showToast("請先從上方選擇專案並填寫預計啟動日期！", "error"); return; }
         
@@ -618,17 +666,8 @@
         const project = StateStore.get("projectsList").find(p => p.sheetType === sheetType && p._rowId === parseInt(rowIdStr, 10));
         if (!project) return;
 
-        btn.disabled = true; 
-        btn.innerHTML = `<i data-lucide="loader" style="width:16px; height:16px; animation: spin 1s linear infinite;"></i> 排程中 (0%)`; 
-        lucide.createIcons();
-
-        let progress = 0;
-        const simInterval = setInterval(() => {
-          progress += Math.floor(Math.random() * 20) + 10; 
-          if (progress > 90) progress = 90;
-          btn.innerHTML = `<i data-lucide="loader" style="width:16px; height:16px; animation: spin 1s linear infinite;"></i> 排程中 (${progress}%)`;
-          lucide.createIcons();
-        }, 500);
+        showGlobalLoader("執行自動排程", "正在計算時段與避開衝突...");
+        startSimulatedProgress("寫入 Google 日曆與專案表單中");
 
         try {
           const result = await apiClient.call('executeAutoSchedule', { 
@@ -638,27 +677,24 @@
               serviceItem: project.serviceItem, 
               startDate: startDate 
           });
-          clearInterval(simInterval);
-          btn.innerHTML = `<i data-lucide="check" style="width:16px; height:16px;"></i> 排程成功`; 
-          lucide.createIcons();
+          
+          updateGlobalLoader(90, "排程完畢，正在刷新資料...");
+          const freshData = await apiClient.call('getInitialData'); 
+          StateStore.setInitialData(freshData);
+          
+          updateGlobalLoader(100, "完成！");
           showToast(result.message || "自動排程成功！", "info");
-          const freshData = await apiClient.call('getInitialData'); StateStore.setInitialData(freshData);
         } catch (err) { 
-          clearInterval(simInterval);
+          clearInterval(globalLoaderInterval);
           showToast("排程失敗：" + err.toString(), "error");
         } finally { 
-          setTimeout(() => {
-            btn.disabled = false; 
-            btn.innerHTML = `<i data-lucide="calendar-plus" style="width:16px; height:16px;"></i> 自動排程`; 
-            lucide.createIcons();
-          }, 2000);
+          setTimeout(hideGlobalLoader, 600);
         }
       }
 
       async function handleNextMonthScheduleClick() {
         const activeProjectKey = StateStore.get("activeProjectKey");
         const startDate = document.getElementById("start-date-input").value;
-        const btn = document.getElementById("btn-next-month-schedule");
 
         if (!activeProjectKey || !startDate) { showToast("請先選擇專案並填寫次月預計啟動日期！", "error"); return; }
         
@@ -666,9 +702,8 @@
         const project = StateStore.get("projectsList").find(p => p.sheetType === sheetType && p._rowId === parseInt(rowIdStr, 10));
         if (!project || project.sheetType !== "專案-訂閱服務") return;
 
-        btn.disabled = true; 
-        btn.innerHTML = `<i data-lucide="loader" style="width:16px; height:16px; animation: spin 1s linear infinite;"></i> 處理中...`; 
-        lucide.createIcons();
+        showGlobalLoader("產生次月排程", "正在計算次月循環任務...");
+        startSimulatedProgress("排入日曆與專案表單中");
 
         try {
           const result = await apiClient.call('scheduleNextMonth', { 
@@ -678,18 +713,18 @@
               serviceItem: project.serviceItem, 
               startDate: startDate 
           });
-          btn.innerHTML = `<i data-lucide="check" style="width:16px; height:16px;"></i> 產生成功`; 
-          lucide.createIcons();
+          
+          updateGlobalLoader(90, "產生完畢，正在刷新資料...");
+          const freshData = await apiClient.call('getInitialData'); 
+          StateStore.setInitialData(freshData);
+          
+          updateGlobalLoader(100, "完成！");
           showToast(result.message || "次月排程成功！", "info");
-          const freshData = await apiClient.call('getInitialData'); StateStore.setInitialData(freshData);
         } catch (err) { 
+          clearInterval(globalLoaderInterval);
           showToast("排程失敗：" + err.toString(), "error");
         } finally { 
-          setTimeout(() => {
-            btn.disabled = false; 
-            btn.innerHTML = `<i data-lucide="calendar-range" style="width:16px; height:16px;"></i> 產生次月排程`; 
-            lucide.createIcons();
-          }, 2000);
+          setTimeout(hideGlobalLoader, 600);
         }
       }
 
@@ -701,18 +736,8 @@
         const project = StateStore.get("projectsList").find(p => p.sheetType === sheetType && p._rowId === parseInt(rowIdStr, 10));
         if (!project) return;
 
-        const btn = document.getElementById("btn-refresh-schedule");
-        btn.disabled = true; 
-        btn.innerHTML = `<i data-lucide="loader" style="width:16px; height:16px; animation: spin 1s linear infinite;"></i> 刷新中 (0%)`; 
-        lucide.createIcons();
-        
-        let progress = 0;
-        const simInterval = setInterval(() => {
-          progress += Math.floor(Math.random() * 20) + 10;
-          if (progress > 90) progress = 90;
-          btn.innerHTML = `<i data-lucide="loader" style="width:16px; height:16px; animation: spin 1s linear infinite;"></i> 刷新中 (${progress}%)`;
-          lucide.createIcons();
-        }, 500);
+        showGlobalLoader("刷新未來排程", "正在重新比對任務狀態...");
+        startSimulatedProgress("同步至 Google 日曆中");
 
         try {
           const result = await apiClient.call('refreshSchedule', { 
@@ -721,20 +746,18 @@
               rowId: project._rowId, 
               serviceItem: project.serviceItem 
           });
-          clearInterval(simInterval);
-          btn.innerHTML = `<i data-lucide="check" style="width:16px; height:16px;"></i> 刷新成功`; 
-          lucide.createIcons();
+          
+          updateGlobalLoader(90, "刷新完畢，重新載入專案資料...");
+          const freshData = await apiClient.call('getInitialData'); 
+          StateStore.setInitialData(freshData);
+          
+          updateGlobalLoader(100, "完成！");
           showToast(result.message || "排程刷新成功！", "info");
-          const freshData = await apiClient.call('getInitialData'); StateStore.setInitialData(freshData);
         } catch(e) {
-          clearInterval(simInterval);
+          clearInterval(globalLoaderInterval);
           showToast("刷新失敗：" + e.toString(), "error");
         } finally {
-          setTimeout(() => {
-            btn.disabled = false; 
-            btn.innerHTML = `<i data-lucide="refresh-cw" style="width:16px; height:16px;"></i> 刷新未來排程`; 
-            lucide.createIcons();
-          }, 2000);
+          setTimeout(hideGlobalLoader, 600);
         }
       }
 
@@ -748,10 +771,8 @@
 
         if (!confirm("確定要清除 [今日以後] 的所有排程嗎？\n已存在的歷史紀錄將會完美保留，但未來的行程將從日曆中刪除！")) return;
         
-        const btn = document.getElementById("btn-clear-schedule");
-        btn.disabled = true; 
-        btn.innerHTML = `<i data-lucide="loader" style="width:16px; height:16px; animation: spin 1s linear infinite;"></i> 清除中...`; 
-        lucide.createIcons();
+        showGlobalLoader("清除未來排程", "正在刪除尚未執行的日曆行程...");
+        startSimulatedProgress("清理專案追蹤紀錄中");
 
         try {
           const result = await apiClient.call('clearFutureSchedule', { 
@@ -760,19 +781,69 @@
               rowId: project._rowId, 
               serviceItem: project.serviceItem
           });
-          btn.innerHTML = `<i data-lucide="check" style="width:16px; height:16px;"></i> 清除成功`; 
-          lucide.createIcons();
+          
+          updateGlobalLoader(90, "清除完畢，正在刷新資料...");
+          const freshData = await apiClient.call('getInitialData'); 
+          StateStore.setInitialData(freshData);
+          
+          updateGlobalLoader(100, "完成！");
           showToast(result.message || "清除成功！", "info");
-          const freshData = await apiClient.call('getInitialData'); StateStore.setInitialData(freshData);
         } catch(e) {
+          clearInterval(globalLoaderInterval);
           showToast("清除失敗：" + e.toString(), "error");
         } finally {
-          setTimeout(() => {
-            btn.disabled = false; 
-            btn.innerHTML = `<i data-lucide="trash-2" style="width:16px; height:16px;"></i> 清除未來排程`; 
-            lucide.createIcons();
-          }, 2000);
+          setTimeout(hideGlobalLoader, 600);
         }
+      }
+
+      async function handleSyncCalendarClick() {
+        showGlobalLoader("同步 Google 日曆中", "正在抓取日曆最新異動...");
+        startSimulatedProgress("與雲端資料庫比對中");
+
+        try {
+          const syncResult = await apiClient.call('syncCalendarNow');
+          updateGlobalLoader(90, "比對完成！正在重新載入專案資料...");
+          
+          const freshData = await apiClient.call('getInitialData');
+          StateStore.setInitialData(freshData);
+          
+          updateGlobalLoader(100, "載入完成！");
+          showToast(syncResult.message || "日曆同步完成！", "info");
+          
+          if (StateStore.get('activeProjectKey')) {
+             renderFishboneDiagram();
+          }
+        } catch (err) {
+          clearInterval(globalLoaderInterval);
+          showToast("同步失敗：" + err.toString(), "error");
+        } finally {
+          setTimeout(hideGlobalLoader, 600);
+        }
+      }
+
+      // ==========================================
+      // 其他專案操作
+      // ==========================================
+      async function handleDeleteProject(projectId, sheetType, rowId) {
+         if(!confirm(`確定要徹底刪除專案 [${projectId}] 的追蹤紀錄嗎？\n注意：這只會刪除專案表的追蹤資料，報價單母檔仍會保留。`)) return;
+         
+         showGlobalLoader("刪除專案", "正在刪除專案追蹤資料...");
+         startSimulatedProgress("清理資料庫中");
+         try {
+            await apiClient.call('deleteProjectFromSheet', { projectId, sheetType, rowId });
+            updateGlobalLoader(90, "刪除完畢，刷新列表中...");
+            StateStore.set("activeProjectKey", null);
+            const freshData = await apiClient.call('getInitialData'); 
+            StateStore.setInitialData(freshData);
+            
+            updateGlobalLoader(100, "完成！");
+            showToast("專案刪除成功！", "info");
+         } catch(e) {
+            clearInterval(globalLoaderInterval);
+            showToast("刪除失敗：" + e.toString(), "error");
+         } finally {
+            setTimeout(hideGlobalLoader, 600);
+         }
       }
 
       function filterAndRenderProjects() {
@@ -1321,7 +1392,6 @@
                 const editLogId = `inline-edit-hist-log-${i}`;
 
                 if (!isSystem) {
-                   const encodedContent = encodeURIComponent(l.logContent);
                    actionButtons = `
                      <div style="display:flex; gap:4px; opacity: 0.6;">
                         <button class="btn-icon ghost" title="修改日誌" onclick="toggleInlinePanel('${editLogId}')">
@@ -1443,7 +1513,6 @@
           const newContent = document.getElementById(textInputId).value.trim();
           const newDuration = parseFloat(document.getElementById(durInputId).value) || 0;
           if (!newContent) return showToast("內容不能為空", "error");
-          showToast("正在更新日誌...", "info"); 
           try { 
               await apiClient.call('editLog', { projectId, rowId, sheetType, timestamp, newContent, newDuration });
               showToast("日誌已更新！", "info"); const freshData = await apiClient.call('getInitialData'); StateStore.setInitialData(freshData); renderFishboneDiagram();
@@ -1452,7 +1521,6 @@
 
       function confirmDeleteLog(projectId, sheetType, rowId, timestamp) {
           if(!confirm("確定要刪除這筆日誌嗎？此動作無法復原。")) return;
-          showToast("正在刪除...", "info");
           apiClient.call('deleteLog', { projectId, rowId, sheetType, timestamp }).then(async () => {
               showToast("日誌已刪除！", "info"); const freshData = await apiClient.call('getInitialData'); StateStore.setInitialData(freshData); renderFishboneDiagram();
           }).catch(e => showToast("刪除失敗：" + e.toString(), "error"));
@@ -1460,7 +1528,6 @@
 
       function confirmDeleteTask(projectId, sheetType, rowId, nodeName, taskName) {
           if(!confirm(`確定要刪除任務「${taskName}」嗎？\n刪除後會從列表中消失，但歷史紀錄仍會保留。`)) return;
-          showToast("正在刪除任務...", "info");
           apiClient.call('deleteTask', { projectId, rowId, sheetType, nodeName, taskName }).then(async () => {
               showToast("任務已成功刪除！", "info"); const freshData = await apiClient.call('getInitialData'); StateStore.setInitialData(freshData); renderFishboneDiagram();
           }).catch(e => showToast("刪除失敗：" + e.toString(), "error"));
@@ -1487,7 +1554,6 @@
       async function submitEditTaskDate(projectId, sheetType, rowId, serviceItem, nodeName, taskName, inputId) {
           const newDate = document.getElementById(inputId).value;
           if (!newDate) { showToast("請選擇一個日期", "error"); return; }
-          showToast("正在更新排程...", "info"); 
           try {
               await apiClient.call('updateTaskSchedule', { projectId, sheetType, rowId, serviceItem, nodeName, taskName, newDate });
               showToast("排程日期更新成功！", "info");
@@ -1520,6 +1586,49 @@
           },
           () => { StateStore.set('projectsList', oldState); renderFishboneDiagram(); }
         );
+      }
+
+      async function submitCustomNode() {
+        const activeProjectKey = StateStore.get('activeProjectKey');
+        if (!activeProjectKey) return showToast("請先從頂部選擇專案", "error");
+        
+        const [sheetType, rowIdStr] = activeProjectKey.split('_');
+        const project = StateStore.get("projectsList").find(p => p.sheetType === sheetType && p._rowId === parseInt(rowIdStr, 10));
+        if (!project) return;
+
+        const nodeName = document.getElementById('custom-node-name').value.trim();
+        const taskName = document.getElementById('custom-task-name').value.trim();
+        const date = document.getElementById('custom-node-date').value;
+        const duration = parseFloat(document.getElementById('custom-node-duration').value) || 0.5;
+
+        if (!nodeName || !taskName || !date) { showToast("請填寫所有必填欄位！", "error"); return; }
+        
+        showGlobalLoader("新增自訂節點", "正在排入日曆...");
+        startSimulatedProgress("與專案總表同步中");
+
+        try {
+          const payload = { 
+              projectId: project.projectId, 
+              sheetType: project.sheetType, 
+              rowId: project._rowId, 
+              serviceItem: project.serviceItem, 
+              nodeName, taskName, date, duration 
+          };
+          const result = await apiClient.call('addCustomNode', payload);
+          updateGlobalLoader(90, "新增完畢，正在刷新資料...");
+          document.getElementById('inline-add-node-form').style.display = 'none';
+          
+          const freshData = await apiClient.call('getInitialData'); 
+          StateStore.setInitialData(freshData); 
+          
+          updateGlobalLoader(100, "完成！");
+          showToast(result.message || "任務已新增成功！", "info");
+        } catch (err) {
+          clearInterval(globalLoaderInterval);
+          showToast("新增失敗：" + err.toString(), "error");
+        } finally {
+          setTimeout(hideGlobalLoader, 600);
+        }
       }
 
       function setupAutocomplete(inputId, dataList, parseOnSelect) {
@@ -1596,8 +1705,8 @@
         if(!toEmail || !subject || !body) return showToast("請填寫收件人、主旨與內容", "error");
         if(fileInput.files.length > 10) return showToast("最多只能上傳 10 個檔案", "error");
 
-        const btn = document.getElementById('btn-submit-email');
-        btn.disabled = true; btn.innerHTML = `<i data-lucide="loader" style="width:16px;height:16px; animation: spin 1s linear infinite;"></i> 處理中...`; lucide.createIcons();
+        showGlobalLoader("發送 Email 與歸檔", "正在處理附件並寄發信件...");
+        startSimulatedProgress("上傳至 Google Drive 歸檔中");
 
         try {
            const attachmentsList = [];
@@ -1620,11 +1729,20 @@
            
            document.getElementById(tempId).style.opacity = '1';
            document.getElementById(tempId).querySelector('div').innerText = `[已發送] ${subject}`;
-           showToast("Email 與附件已成功發送並歸檔雲端！", "info");
+           
+           updateGlobalLoader(90, "發送完畢，正在刷新資料...");
+           const freshData = await apiClient.call('getInitialData'); 
+           StateStore.setInitialData(freshData); 
+           renderEmailView();
 
-           const freshData = await apiClient.call('getInitialData'); StateStore.setInitialData(freshData); renderEmailView();
-        } catch (e) { showToast("寄送失敗: " + e.toString(), "error");
-        } finally { btn.disabled = false; btn.innerHTML = `<i data-lucide="send" style="width:16px;height:16px;"></i> 發送並歸檔`; lucide.createIcons(); }
+           updateGlobalLoader(100, "完成！");
+           showToast("Email 與附件已成功發送並歸檔雲端！", "info");
+        } catch (e) { 
+           clearInterval(globalLoaderInterval);
+           showToast("寄送失敗: " + e.toString(), "error");
+        } finally { 
+           setTimeout(hideGlobalLoader, 600);
+        }
       }
 
       function readFileAsBase64(file) {
@@ -1634,42 +1752,6 @@
             reader.onerror = (e) => reject(e);
             reader.readAsDataURL(file);
         });
-      }
-
-      async function submitCustomNode() {
-        const activeProjectKey = StateStore.get('activeProjectKey');
-        if (!activeProjectKey) return showToast("請先從頂部選擇專案", "error");
-        
-        const [sheetType, rowIdStr] = activeProjectKey.split('_');
-        const project = StateStore.get("projectsList").find(p => p.sheetType === sheetType && p._rowId === parseInt(rowIdStr, 10));
-        if (!project) return;
-
-        const nodeName = document.getElementById('custom-node-name').value.trim();
-        const taskName = document.getElementById('custom-task-name').value.trim();
-        const date = document.getElementById('custom-node-date').value;
-        const duration = parseFloat(document.getElementById('custom-node-duration').value) || 0.5;
-
-        if (!nodeName || !taskName || !date) { showToast("請填寫所有必填欄位！", "error"); return; }
-        const btn = document.getElementById('btn-submit-custom-node');
-        btn.disabled = true; btn.innerHTML = `<i data-lucide="loader" style="width:16px;height:16px; animation: spin 1s linear infinite;"></i> 寫入中...`; lucide.createIcons();
-
-        try {
-          const payload = { 
-              projectId: project.projectId, 
-              sheetType: project.sheetType, 
-              rowId: project._rowId, 
-              serviceItem: project.serviceItem, 
-              nodeName, taskName, date, duration 
-          };
-          const result = await apiClient.call('addCustomNode', payload);
-          showToast(result.message || "任務已新增成功！", "info");
-          document.getElementById('inline-add-node-form').style.display = 'none';
-          const freshData = await apiClient.call('getInitialData'); StateStore.setInitialData(freshData); renderFishboneDiagram();
-        } catch (err) {
-          showToast("新增失敗：" + err.toString(), "error");
-        } finally {
-          btn.disabled = false; btn.innerHTML = `<i data-lucide="save" style="width:16px;height:16px;"></i> 儲存並排入日曆`; lucide.createIcons();
-        }
       }
 
       // ==========================================
@@ -1696,7 +1778,6 @@
 
         } catch(e) {
           const errorMsg = typeof e === 'string' ? e : (e.message || JSON.stringify(e));
-          // 💥 攔截 ERR_FAILED 提供精準解法引導
           if (errorMsg.includes('Failed to fetch') || errorMsg.includes('ERR_FAILED')) {
               showToast("網路請求被阻擋！請確認 GAS 已經重新發佈為「網頁應用程式」，並設定為「所有人」皆可存取。", "error");
           } else {
